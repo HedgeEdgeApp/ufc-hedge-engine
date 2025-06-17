@@ -61,10 +61,10 @@ if st.button("🧠 Calculate Hedge Table"):
         data.append({
             "Hedge Stake": hedge,
             "Total Wagered": total_staked,
-            "Return if Hedge Wins": round(hedge_return, 2),
-            "Profit if Hedge Wins": round(profit_hedge_win, 2),
-            "Return if Bets Win": round(bets_return, 2),
-            "Profit if Bets Win": round(profit_bets_win, 2),
+            f"Return if {hedge_fighter} Wins": round(hedge_return, 2),
+            f"Profit if {hedge_fighter} Wins": round(profit_hedge_win, 2),
+            "Return if Winning Bets Hit": round(bets_return, 2),
+            "Profit if Winning Bets Hit": round(profit_bets_win, 2),
         })
 
     df = pd.DataFrame(data)
