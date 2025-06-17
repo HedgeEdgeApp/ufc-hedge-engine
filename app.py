@@ -7,17 +7,17 @@ st.title("🧠 UFC Hedge Engine")
 st.markdown("This tool helps you calculate hedge options based on your parlay outcomes and the final fight of the night.")
 
 # User Inputs
-st.header("🔢 Input Your Parlays and Final Fight")
+st.header("🔢 Input Your Bets and Final Fight")
 
-# Parlay 1
-st.subheader("Parlay 1")
-parlay1_odds = st.number_input("Parlay 1 Odds", value=6.00, step=0.01)
-parlay1_stake = st.number_input("Parlay 1 Stake ($)", value=20.0, step=1.0, format="%.2f")
+# Bet 1
+st.subheader("Bet 1")
+bet1_odds = st.number_input("Bet 1 Odds", value=6.00, step=0.01)
+bet1_stake = st.number_input("Bet 1 Stake ($)", value=20.0, step=1.0, format="%.2f")
 
-# Parlay 2
-st.subheader("Parlay 2")
-parlay2_odds = st.number_input("Parlay 2 Odds", value=8.82, step=0.01)
-parlay2_stake = st.number_input("Parlay 2 Stake ($)", value=20.0, step=1.0, format="%.2f")
+# Bet 2
+st.subheader("Bet 2")
+bet2_odds = st.number_input("Bet 2 Odds", value=8.82, step=0.01)
+bet2_stake = st.number_input("Bet 2 Stake ($)", value=20.0, step=1.0, format="%.2f")
 
 # Final Fight (Hedge leg)
 st.subheader("💥 Final Fight Details")
@@ -27,8 +27,8 @@ hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
 # Outcomes
 st.subheader("🧮 Select Who Has Already Won")
 
-p1_legs_hit = st.selectbox("✅ Parlay 1 - Legs before hedge all hit?", options=["Yes", "No"])
-p2_legs_hit = st.selectbox("✅ Parlay 2 - Legs before hedge all hit?", options=["Yes", "No"])
+bet1_legs_hit = st.selectbox("✅ Bet 1 - Legs before hedge all hit?", options=["Yes", "No"])
+bet2_legs_hit = st.selectbox("✅ Bet 2 - Legs before hedge all hit?", options=["Yes", "No"])
 
 # Run calc
 if st.button("🧠 Calculate Hedge Table"):
@@ -36,27 +36,27 @@ if st.button("🧠 Calculate Hedge Table"):
     data = []
 
     for hedge in hedge_steps:
-        total_staked = parlay1_stake + parlay2_stake + hedge
+        total_staked = bet1_stake + bet2_stake + hedge
 
-        # If your hedged fighter wins (parlays lose, hedge hits)
+        # If your hedged fighter wins (bets lose, hedge hits)
         hedge_return = hedge * hedge_odds
         profit_hedge_win = hedge_return - total_staked
 
         # If your parlays hit (hedge loses)
-        parlays_return = 0
-        if p1_legs_hit == "Yes":
-            parlays_return += parlay1_stake * parlay1_odds
-        if p2_legs_hit == "Yes":
-            parlays_return += parlay2_stake * parlay2_odds
-        profit_parlay_win = parlays_return - total_staked
+        bets_return = 0
+        if bet1_legs_hit == "Yes":
+            bets_return += bet1_stake * bet1_odds
+        if bet2_legs_hit == "Yes":
+            bets_return += bet2_stake * bet2_odds
+        profit_bets_win = bets_return - total_staked
 
         data.append({
             "Hedge Stake": hedge,
             "Total Wagered": total_staked,
             "Return if Hedge Wins": round(hedge_return, 2),
             "Profit if Hedge Wins": round(profit_hedge_win, 2),
-            "Return if Parlays Win": round(parlays_return, 2),
-            "Profit if Parlays Win": round(profit_parlay_win, 2),
+            "Return if Bets Win": round(bets_return, 2),
+            "Profit if Bets Win": round(profit_bets_win, 2),
         })
 
     df = pd.DataFrame(data)
