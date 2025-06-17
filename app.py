@@ -4,7 +4,7 @@ import pandas as pd
 # Title
 st.title("🧠 UFC Hedge Engine")
 
-st.markdown("This tool helps you calculate hedge options based on your parlay outcomes and the final fight of the night.")
+st.markdown("This tool helps you calculate hedge options based on your bet outcomes and the final fight of the night.")
 
 # User Inputs
 st.header("🔢 Input Your Bets and Final Fight")
