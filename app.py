@@ -10,14 +10,18 @@ st.markdown("This tool helps you calculate hedge options based on your bet outco
 st.header("🔢 Input Your Bets and Final Fight")
 
 # Bet 1
-st.subheader("Bet 1")
-bet1_odds = st.number_input("Bet 1 Odds", value=6.00, step=0.01)
-bet1_stake = st.number_input("Bet 1 Stake ($)", value=20.0, step=1.0, format="%.2f")
+bet1_name = st.text_input("Name for Bet 1", value="Bet 1")
+st.subheader(bet1_name)
+bet1_odds = st.number_input(f"{bet1_name} Odds", value=6.00, step=0.01)
+bet1_stake = st.number_input(f"{bet1_name} Stake ($)", value=20.0, step=1.0, format="%.2f")
+
 
 # Bet 2
-st.subheader("Bet 2")
-bet2_odds = st.number_input("Bet 2 Odds", value=8.82, step=0.01)
-bet2_stake = st.number_input("Bet 2 Stake ($)", value=20.0, step=1.0, format="%.2f")
+bet2_name = st.text_input("Name for Bet 2", value="Bet 2")
+st.subheader(bet2_name)
+bet2_odds = st.number_input(f"{bet2_name} Odds", value=8.82, step=0.01)
+bet2_stake = st.number_input(f"{bet2_name} Stake ($)", value=20.0, step=1.0, format="%.2f")
+
 
 # Final Fight (Hedge leg)
 st.subheader("💥 Final Fight Details")
