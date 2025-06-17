@@ -31,8 +31,12 @@ hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
 # Outcomes
 st.subheader("🧮 Select Who Has Already Won")
 
-bet1_legs_hit = st.selectbox("✅ Bet 1 - Legs before hedge all hit?", options=["Yes", "No"])
-bet2_legs_hit = st.selectbox("✅ Bet 2 - Legs before hedge all hit?", options=["Yes", "No"])
+# Cleaner labels like "Smith – win?" or "Walker/Smith/Jones – win?"
+def format_result_prompt(bet_name):
+    return f"✅ {bet_name} – win?"
+
+bet1_legs_hit = st.selectbox(format_result_prompt(bet1_name), options=["Yes", "No"])
+bet2_legs_hit = st.selectbox(format_result_prompt(bet2_name), options=["Yes", "No"])
 
 # Run calc
 if st.button("🧠 Calculate Hedge Table"):
