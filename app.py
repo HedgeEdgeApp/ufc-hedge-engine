@@ -70,3 +70,13 @@ if st.button("🧠 Calculate Hedge Table"):
         if "Return" in col or "Profit" in col or "Wagered" in col:
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
     st.dataframe(df_display)
+
+    # Display selected bet outcomes below the table
+    scenario_summary = []
+    if bet1_name:
+        scenario_summary.append(f"{bet1_name} {'✅' if bet1_legs_hit == 'Yes' else '❌'}")
+    if bet2_name:
+        scenario_summary.append(f"{bet2_name} {'✅' if bet2_legs_hit == 'Yes' else '❌'}")
+    
+    if scenario_summary:
+        st.markdown(f"**Scenario:** {' | '.join(scenario_summary)}")
