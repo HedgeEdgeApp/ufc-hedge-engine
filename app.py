@@ -25,7 +25,7 @@ bet2_stake = st.number_input(f"{bet2_name} Stake ($)", value=20.0, step=1.0, for
 
 # Final Fight (Hedge leg)
 st.subheader("💥 Final Fight Details")
-hedge_fighter = st.selectbox("Who are you hedging against? (e.g. Hill)", options=["Hill", "Other"])
+hedge_fighter = st.text_input("Hedge (Fighter Name)", value="Smith")
 hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
 
 # Outcomes
