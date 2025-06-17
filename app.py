@@ -32,7 +32,7 @@ bet2_legs_hit = st.selectbox("✅ Bet 2 - Legs before hedge all hit?", options=[
 
 # Run calc
 if st.button("🧠 Calculate Hedge Table"):
-    hedge_steps = list(range(0, 301, 20))
+    hedge_steps = list(range(0, 301, 10))
     data = []
 
     for hedge in hedge_steps:
