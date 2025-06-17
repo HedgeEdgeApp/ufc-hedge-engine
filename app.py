@@ -12,12 +12,12 @@ st.header("🔢 Input Your Parlays and Final Fight")
 # Parlay 1
 st.subheader("Parlay 1")
 parlay1_odds = st.number_input("Parlay 1 Odds", value=6.00, step=0.01)
-parlay1_stake = st.number_input("Parlay 1 Stake", value=20.0, step=1.0)
+parlay1_stake = st.number_input("Parlay 1 Stake ($)", value=20.0, step=1.0, format="%.2f")
 
 # Parlay 2
 st.subheader("Parlay 2")
 parlay2_odds = st.number_input("Parlay 2 Odds", value=8.82, step=0.01)
-parlay2_stake = st.number_input("Parlay 2 Stake", value=20.0, step=1.0)
+parlay2_stake = st.number_input("Parlay 2 Stake ($)", value=20.0, step=1.0, format="%.2f")
 
 # Final Fight (Hedge leg)
 st.subheader("💥 Final Fight Details")
