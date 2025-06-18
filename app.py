@@ -9,7 +9,6 @@ st.markdown("This tool helps you calculate hedge options based on your bet outco
 # User Inputs
 st.header("🔢 Input Your Bets and Final Fight")
 
-# Bet 1
 # 📦 Dynamic Bets
 st.subheader("🧾 Add Your Bets")
 
@@ -24,13 +23,10 @@ for i in range(num_bets):
     won = st.selectbox(f"✅ {name} – win?", options=["Yes", "No"], key=f"result_{i}")
     bets.append({'name': name, 'odds': odds, 'stake': stake, 'won': won})
 
-
-# Cleaner labels like "Smith – win?" or "Walker/Smith/Jones – win?"
-def format_result_prompt(bet_name):
-    return f"✅ {bet_name} – win?"
-
-bet1_legs_hit = st.selectbox(format_result_prompt(bet1_name), options=["Yes", "No"])
-bet2_legs_hit = st.selectbox(format_result_prompt(bet2_name), options=["Yes", "No"])
+# 💥 Final Fight Details
+st.subheader("💥 Final Fight Details")
+hedge_fighter = st.text_input("Hedge (Fighter Name)", value="Smith")
+hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
 
 # Run calc
 if st.button("🧠 Calculate Hedge Table"):
@@ -38,16 +34,17 @@ if st.button("🧠 Calculate Hedge Table"):
     data = []
 
     for hedge in hedge_steps:
-    total_bets_stake = sum(bet['stake'] for bet in bets)
-    total_staked = total_bets_stake + hedge
+        total_bets_stake = sum(bet['stake'] for bet in bets)
+        total_staked = total_bets_stake + hedge
 
-    # If hedge hits (bets lose)
-    hedge_return = hedge * hedge_odds
-    profit_hedge_win = hedge_return - total_staked
+        # If hedge hits (bets lose)
+        hedge_return = hedge * hedge_odds
+        profit_hedge_win = hedge_return - total_staked
 
-    # If bets win (hedge loses)
-    bets_return = sum(bet['stake'] * bet['odds'] for bet in bets if bet['won'] == "Yes")
-    profit_bets_win = bets_return - total_staked
+        # If bets win (hedge loses)
+        bets_return = sum(bet['stake'] * bet['odds'] for bet in bets if bet['won'] == "Yes")
+        profit_bets_win = bets_return - total_staked
+
         data.append({
             "Hedge Stake": hedge,
             "Total Wagered": total_staked,
@@ -65,9 +62,7 @@ if st.button("🧠 Calculate Hedge Table"):
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
     st.dataframe(df_display)
 
-    # Display selected bet outcomes below the table
-    
+    # Scenario summary
     scenario_summary = [f"{bet['name']} {'✅' if bet['won'] == 'Yes' else '❌'}" for bet in bets]
-
     if scenario_summary:
         st.markdown(f"**Scenario:** {' | '.join(scenario_summary)}")
