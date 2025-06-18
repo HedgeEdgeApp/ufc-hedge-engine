@@ -16,9 +16,9 @@ num_bets = st.number_input("How many bets?", min_value=1, max_value=10, value=1,
 bets = []
 
 for i in range(num_bets):
-    st.markdown(f"---")  # 🔁 move this here first
+    st.markdown(f"---")  # separator
     name = st.text_input(f"Name for Bet #{i+1}", value=f"Bet {i+1}", key=f"name_{i}")
-    st.markdown(f"#### {name}")  # 👈 appears *after* name input is set
+    st.markdown(f"#### {name}")
     odds = st.number_input(f"{name} Odds", value=2.00, step=0.01, key=f"odds_{i}")
     stake = st.number_input(f"{name} Stake ($)", value=20.0, step=1.0, format="%.2f", key=f"stake_{i}")
     won = st.selectbox(f"✅ {name} – win?", options=["Yes", "No"], key=f"result_{i}")
@@ -33,6 +33,10 @@ hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
 if st.button("🧠 Calculate Hedge Table"):
     hedge_steps = list(range(0, 301, 10))
     data = []
+
+    # Lock in dynamic column names
+    col_return_hedge = f"Return if {hedge_fighter} Wins"
+    col_profit_hedge = f"Profit if {hedge_fighter} Wins"
 
     for hedge in hedge_steps:
         total_bets_stake = sum(bet['stake'] for bet in bets)
@@ -49,14 +53,15 @@ if st.button("🧠 Calculate Hedge Table"):
         data.append({
             "Hedge Stake": hedge,
             "Total Wagered": total_staked,
-            f"Return if {hedge_fighter} Wins": round(hedge_return, 2),
-            f"Profit if {hedge_fighter} Wins": round(profit_hedge_win, 2),
             "Return if Winning Bets Hit": round(bets_return, 2),
             "Profit if Winning Bets Hit": round(profit_bets_win, 2),
+            col_return_hedge: round(hedge_return, 2),
+            col_profit_hedge: round(profit_hedge_win, 2),
         })
 
     df = pd.DataFrame(data)
     st.success("✅ Hedge Matrix Generated:")
+
     df_display = df.copy()
     for col in df.columns:
         if (
@@ -73,11 +78,11 @@ if st.button("🧠 Calculate Hedge Table"):
         "Total Wagered",
         "Return if Winning Bets Hit",
         "Profit if Winning Bets Hit",
-        f"Return if {hedge_fighter} Wins",
-        f"Profit if {hedge_fighter} Wins",
+        col_return_hedge,
+        col_profit_hedge,
     ]
     st.dataframe(df_display[column_order])
- 
+
     # Scenario summary
     scenario_summary = [f"{bet['name']} {'✅' if bet['won'] == 'Yes' else '❌'}" for bet in bets]
     if scenario_summary:
