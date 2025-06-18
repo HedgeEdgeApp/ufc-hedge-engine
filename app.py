@@ -16,7 +16,6 @@ num_bets = st.number_input("How many bets?", min_value=1, max_value=10, value=1,
 bets = []
 
 for i in range(num_bets):
-    st.markdown(f"---\n#### {name}")
     name = st.text_input(f"Name for Bet #{i+1}", value=f"Bet {i+1}", key=f"name_{i}")
     st.markdown(f"---\n#### {name}")  # This now reflects the custom name
     odds = st.number_input(f"{name} Odds", value=2.00, step=0.01, key=f"odds_{i}")
