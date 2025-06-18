@@ -16,12 +16,14 @@ num_bets = st.number_input("How many bets?", min_value=1, max_value=10, value=1,
 bets = []
 
 for i in range(num_bets):
-    st.markdown(f"---\n#### Bet #{i+1}")
+    st.markdown(f"---\n#### {name}")
     name = st.text_input(f"Name for Bet #{i+1}", value=f"Bet {i+1}", key=f"name_{i}")
+    st.markdown(f"---\n#### {name}")  # This now reflects the custom name
     odds = st.number_input(f"{name} Odds", value=2.00, step=0.01, key=f"odds_{i}")
     stake = st.number_input(f"{name} Stake ($)", value=20.0, step=1.0, format="%.2f", key=f"stake_{i}")
     won = st.selectbox(f"✅ {name} – win?", options=["Yes", "No"], key=f"result_{i}")
     bets.append({'name': name, 'odds': odds, 'stake': stake, 'won': won})
+
 
 # 💥 Final Fight Details
 st.subheader("💥 Final Fight Details")
