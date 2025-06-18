@@ -59,8 +59,14 @@ if st.button("🧠 Calculate Hedge Table"):
     st.success("✅ Hedge Matrix Generated:")
     df_display = df.copy()
     for col in df.columns:
-        if "Return" in col or "Profit" in col or "Wagered" in col:
+        if (
+            "Return" in col
+            or "Profit" in col
+            or "Wagered" in col
+            or "Hedge Stake" in col
+        ):
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
+
     st.dataframe(df_display)
  
     # Scenario summary
