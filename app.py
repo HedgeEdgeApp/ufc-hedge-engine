@@ -67,7 +67,16 @@ if st.button("🧠 Calculate Hedge Table"):
         ):
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
 
-    st.dataframe(df_display)
+    # Reorder columns for display
+    column_order = [
+        "Hedge Stake",
+        "Total Wagered",
+        "Return if Winning Bets Hit",
+        "Profit if Winning Bets Hit",
+        f"Return if {hedge_fighter} Wins",
+        f"Profit if {hedge_fighter} Wins",
+    ]
+    st.dataframe(df_display[column_order])
  
     # Scenario summary
     scenario_summary = [f"{bet['name']} {'✅' if bet['won'] == 'Yes' else '❌'}" for bet in bets]
