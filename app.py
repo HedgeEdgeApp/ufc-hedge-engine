@@ -83,4 +83,4 @@ if st.button("🧠 Calculate Hedge Table"):
     for col in df.columns:
         if "Return" in col or "Profit" in col or "Wagered" in col or "Hedge Stake" in col:
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
-    st.dataframe(df_display) 
+    st.dataframe(df_display)   
