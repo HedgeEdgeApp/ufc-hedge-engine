@@ -50,10 +50,22 @@ if st.button("🧠 Calculate Hedge Table"):
         total_bets_stake = sum(bet['stake'] for bet in bets)
         total_staked = total_bets_stake + hedge
 
-        hedge_return = hedge * hedge_odds
+        # 🧠 NEW — Early wins
+        early_winnings = sum(
+            bet['stake'] * bet['odds']
+            for i, bet in enumerate(bets)
+            if bet['won'] == "Yes" and i != final_fight_index
+        )
+
+        # 💥 Hedge wins
+        hedge_return = early_winnings + (hedge * hedge_odds)
         profit_hedge_win = hedge_return - total_staked
 
-        bets_return = sum(bet['stake'] * bet['odds'] for bet in bets if bet['won'] == "Yes")
+        # ✅ All bets win (incl. final)
+        bets_return = sum(
+            bet['stake'] * bet['odds']
+            for bet in bets if bet['won'] == "Yes"
+        )
         profit_bets_win = bets_return - total_staked
 
         data.append({
@@ -64,6 +76,7 @@ if st.button("🧠 Calculate Hedge Table"):
             f"Return if {hedge_name} (Hedge) Wins": round(hedge_return, 2),
             f"Profit if {hedge_name} (Hedge) Wins": round(profit_hedge_win, 2),
         })
+
 
     df = pd.DataFrame(data)
 
