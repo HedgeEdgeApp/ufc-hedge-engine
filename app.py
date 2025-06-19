@@ -90,3 +90,4 @@ if st.button("🧠 Calculate Hedge Table"):
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
 
     st.dataframe(df_display) 
+ 
