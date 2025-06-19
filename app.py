@@ -21,9 +21,9 @@ for i in range(num_bets):
     st.markdown(f"#### {name}")
     odds = st.number_input(f"{name} Odds", value=2.00, step=0.01, key=f"odds_{i}")
     stake = st.number_input(f"{name} Stake ($)", value=20.0, step=1.0, format="%.2f", key=f"stake_{i}")
-    won = st.selectbox(f"✅ {name} – win?", options=["Yes", "No"], key=f"result_{i}")
-    hedge_flag = st.checkbox("☑️ This bet depends on the final fight outcome (subject to hedge)", key=f"hedge_{i}")
-    bets.append({'name': name, 'odds': odds, 'stake': stake, 'won': won, 'hedge': hedge_flag})
+    won = st.selectbox(f"✅ {name} – win?", options=["TBD", "Yes", "No"], index=0, key=f"result_{i}")
+    is_hedged = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedged_{i}")
+    bets.append({'name': name, 'odds': odds, 'stake': stake, 'won': won, 'hedged': is_hedged})
 
 # 💥 Final Fight Details
 st.subheader("💥 Final Fight Details")
@@ -35,52 +35,54 @@ if st.button("🧠 Calculate Hedge Table"):
     hedge_steps = list(range(0, 301, 10))
     data = []
 
-    # Partition the bets
-    active_bets = [bet for bet in bets if bet["won"] == "Yes"]
-    hedge_bets = [bet for bet in active_bets if bet["hedge"]]
-    safe_bets = [bet for bet in active_bets if not bet["hedge"]]
-
-    # Total returns if original wins (hedged bets win too)
-    original_return = sum(bet["stake"] * bet["odds"] for bet in active_bets)
-
     for hedge in hedge_steps:
-        total_staked = sum(bet["stake"] for bet in bets) + hedge
+        total_bets_stake = sum(bet['stake'] for bet in bets)
+        total_staked = total_bets_stake + hedge
 
-        # If hedge wins (original/hedge-linked bets lose)
+        # If hedge wins (original fighter loses)
         hedge_return = hedge * hedge_odds
-        hedge_loss = sum(bet["stake"] for bet in hedge_bets)
-        hedge_safe_win = sum(bet["stake"] * bet["odds"] for bet in safe_bets)
-        profit_hedge_win = hedge_return + hedge_safe_win - total_staked
+        profit_hedge_win = hedge_return - total_staked
 
-        profit_original_win = original_return - total_staked
+        # If original fighter wins (hedge loses)
+        bets_return = 0
+        for bet in bets:
+            if bet['won'] == "Yes":
+                bets_return += bet['stake'] * bet['odds']
+            elif bet['won'] == "TBD" and bet['hedged']:
+                bets_return += bet['stake'] * bet['odds']
+        profit_bets_win = bets_return - total_staked
 
         data.append({
             "Hedge Stake": hedge,
             "Total Wagered": total_staked,
-            f"Return if Original Wins": round(original_return, 2),
-            f"Profit if Original Wins": round(profit_original_win, 2),
-            f"Return if {hedge_fighter} (Hedge) Wins": round(hedge_return + hedge_safe_win, 2),
+            "Return if Original Fighter Wins": round(bets_return, 2),
+            "Profit if Original Fighter Wins": round(profit_bets_win, 2),
+            f"Return if {hedge_fighter} (Hedge) Wins": round(hedge_return, 2),
             f"Profit if {hedge_fighter} (Hedge) Wins": round(profit_hedge_win, 2),
         })
 
     df = pd.DataFrame(data)
 
-    # 💬 Scenario summary
-    scenario_summary = []
+    st.markdown("### 🧾 Scenario Summary:")
+    summary = []
     for bet in bets:
-        if bet["hedge"]:
-            outcome = "❓" if bet["won"] == "Yes" else "❌"
-        else:
-            outcome = "✅" if bet["won"] == "Yes" else "❌"
-        scenario_summary.append(f"{bet['name']} {outcome}")
+        symbol = "✅" if bet['won'] == "Yes" else "❌" if bet['won'] == "No" else "❓"
+        summary.append(f"{bet['name']} {symbol}")
+    st.markdown(" | ".join(summary))
 
-    st.markdown("### 🧾 Scenario")
-    st.markdown(" | ".join(scenario_summary))
-
-    # 💰 Format and display table
     st.success("✅ Hedge Matrix Generated:")
     df_display = df.copy()
     for col in df.columns:
         if "Return" in col or "Profit" in col or "Wagered" in col or "Hedge Stake" in col:
             df_display[col] = df[col].apply(lambda x: f"${x:,.2f}")
-    st.dataframe(df_display)   
+
+    # Set column order
+    ordered_cols = [
+        "Hedge Stake",
+        "Total Wagered",
+        "Return if Original Fighter Wins",
+        "Profit if Original Fighter Wins",
+        f"Return if {hedge_fighter} (Hedge) Wins",
+        f"Profit if {hedge_fighter} (Hedge) Wins"
+    ]
+    st.dataframe(df_display[ordered_cols])
