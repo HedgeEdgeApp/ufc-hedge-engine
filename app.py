@@ -85,4 +85,4 @@ if st.button("🧠 Calculate Hedge Table"):
         f"Return if {hedge_fighter} (Hedge) Wins",
         f"Profit if {hedge_fighter} (Hedge) Wins"
     ]
-    st.dataframe(df_display[ordered_cols])
+    st.dataframe(df_display[ordered_cols]) 
