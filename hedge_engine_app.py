@@ -100,4 +100,4 @@ if st.button("🧮 Calculate Hedge Table") and hedge_fighter:
 
     # Display table
     st.markdown("### 📊 Hedge Table")
-    st.dataframe(df_display, hide_index=True) 
+    st.dataframe(df_display, hide_index=True)  
