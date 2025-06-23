@@ -29,7 +29,7 @@ def calculate_hedge_matrix(live_bets, hedge_odds, hedge_fighter, max_hedge=300):
     return pd.DataFrame(results)
 
 # Streamlit app starts here
-st.title("💸 UFC Hedge Engine")
+st.title("💸 Sport Hedge Engine")
 
 bets = []
 num_bets = st.number_input("How many bets do you want to input?", 1, 10, 3)
