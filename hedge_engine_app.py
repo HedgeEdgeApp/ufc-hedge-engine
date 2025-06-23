@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 # Title
 st.title("🧠 UFC Hedge Engine")
@@ -15,7 +15,6 @@ st.subheader("🧾 Add Your Bets")
 
 num_bets = st.number_input("How many bets?", min_value=1, max_value=10, value=1, step=1)
 bets = []
-final_bet_index = None
 
 for i in range(num_bets):
     st.markdown(f"---")
@@ -23,74 +22,75 @@ for i in range(num_bets):
     st.markdown(f"#### {name}")
     odds = st.number_input(f"{name} Odds", value=2.00, step=0.01, key=f"odds_{i}")
     stake = st.number_input(f"{name} Stake ($)", value=20.0, step=1.0, format="%.2f", key=f"stake_{i}")
-    result = st.selectbox(f"✅ {name} – result?", options=["TBD", "Yes", "No"], key=f"result_{i}")
-    is_subject_to_hedge = st.checkbox("☑️ This bet depends on the final outcome (subject to hedge)", key=f"hedge_{i}")
-    is_final_bet = st.checkbox("🏁 Is this the final fight you want to hedge?", key=f"final_{i}")
-    if is_final_bet:
-        final_bet_index = i
-    bets.append({'name': name, 'odds': odds, 'stake': stake, 'result': result, 'hedged': is_subject_to_hedge})
+    won = st.selectbox(f"✅ {name} – win?", options=["TBD", "Yes", "No"], key=f"result_{i}")
+    is_final = st.checkbox(f"📍 This bet depends on the final outcome (subject to hedge)?", key=f"final_{i}")
+    bets.append({'name': name, 'odds': odds, 'stake': stake, 'won': won, 'final': is_final})
 
-# Final Fight Details
-hedge_fighter = ""
-hedge_odds = 0.0
+# 💥 Final Fight Details
+st.subheader("💥 Final Fight Details")
 
-if final_bet_index is not None:
-    st.subheader("💥 Final Fight Hedge Details")
-    hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
-    hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
+hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)", value="Smith")
+hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
 
+# 🧮 Run the Calculation
 if st.button("🧠 Calculate Hedge Table"):
     hedge_steps = list(range(0, 301, 10))
     data = []
 
+    # Summary display above table
+    scenario_summary = []
+    for bet in bets:
+        if bet['final']:
+            scenario_summary.append(f"{bet['name']} ❓")
+        elif bet['won'] == "Yes":
+            scenario_summary.append(f"{bet['name']} ✅")
+        elif bet['won'] == "No":
+            scenario_summary.append(f"{bet['name']} ❌")
+        else:
+            scenario_summary.append(f"{bet['name']} ❓")
+
+    st.markdown(f"**Scenario:** {' | '.join(scenario_summary)}")
+
     for hedge in hedge_steps:
-        total_stake = sum(bet['stake'] for bet in bets)
+        # Separate confirmed bets from final-fight-dependent bets
+        confirmed_bets = [b for b in bets if not b['final'] and b['won'] == "Yes"]
+        final_fight_bets = [b for b in bets if b['final']]
+
+        total_bets_stake = sum(b['stake'] for b in bets)
+        total_staked = total_bets_stake + hedge
+
+        # If original fighter wins (bets hit)
+        original_return = sum(b['stake'] * b['odds'] for b in confirmed_bets) + \
+                          sum(b['stake'] * b['odds'] for b in final_fight_bets)
+        profit_original = original_return - total_staked
+
+        # If hedge fighter wins (final fight bets lose)
         hedge_return = hedge * hedge_odds
-        total_wagered = total_stake + hedge
-
-        bets_return_if_original = 0
-        for bet in bets:
-            if bet['result'] == "Yes":
-                bets_return_if_original += bet['stake'] * bet['odds']
-            elif bet['result'] == "TBD" and bet['hedged']:
-                bets_return_if_original += bet['stake'] * bet['odds']
-
-        profit_if_original = bets_return_if_original - total_wagered
-        profit_if_hedge = hedge_return - total_wagered if all(
-            bet['result'] == "No" or (bet['result'] == "TBD" and bet['hedged']) for bet in bets
-        ) else hedge_return + sum(
-            bet['stake'] * bet['odds'] for bet in bets if bet['result'] == "Yes" and not bet['hedged']
-        ) - total_wagered
+        profit_hedge = hedge_return + sum(b['stake'] * b['odds'] for b in confirmed_bets) - total_staked
 
         data.append({
-            "Hedge Stake": hedge,
-            "Total Wagered": total_wagered,
-            "Return if Original Fighter Wins": round(bets_return_if_original, 2),
-            "Profit if Original Fighter Wins": round(profit_if_original, 2),
-            f"Return if {hedge_fighter} (Hedge) Wins": round(hedge_return, 2),
-            f"Profit if {hedge_fighter} (Hedge) Wins": round(profit_if_hedge, 2),
+            "Hedge Stake ($)": hedge,
+            "Total Wagered": round(total_staked, 2),
+            "Return if Original Fighter Wins": round(original_return, 2),
+            "Profit if Original Fighter Wins": round(profit_original, 2),
+            f"Return if {hedge_fighter} (Hedge) Wins": round(hedge_return + sum(b['stake'] * b['odds'] for b in confirmed_bets), 2),
+            f"Profit if {hedge_fighter} (Hedge) Wins": round(profit_hedge, 2),
         })
 
     df = pd.DataFrame(data)
 
-    st.markdown("### ✅ Scenario Overview")
-    scenario_summary = [
-        f"{bet['name']} ✅" if bet['result'] == "Yes"
-        else f"{bet['name']} ❌" if bet['result'] == "No"
-        else f"{bet['name']} ❓" for bet in bets
-    ]
-    st.markdown("**Scenario:** " + " | ".join(scenario_summary))
-
-    # Format currency
-    df_display = df.copy()
-    for col in df_display.columns:
-        if "Return" in col or "Profit" in col or "Wagered" in col or "Hedge Stake" in col:
-            df_display[col] = df_display[col].apply(lambda x: f"${x:,.2f}")
-
-    # Use AgGrid for pinned first column
-    gb = GridOptionsBuilder.from_dataframe(df_display)
-    gb.configure_column("Hedge Stake", pinned="left")
-    gb.configure_grid_options(domLayout='normal')
+    # 🧲 AgGrid with sticky column
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_column("Hedge Stake ($)", pinned="left")
+    gb.configure_default_column(resizable=True, filter=True, sortable=True)
     grid_options = gb.build()
 
-    AgGrid(df_display, gridOptions=grid_options, height=400, theme="streamlit")
+    st.markdown("### 💡 Hedge Matrix")
+    AgGrid(
+        df,
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.NO_UPDATE,
+        allow_unsafe_jscode=True,
+        height=400,
+        fit_columns_on_grid_load=True,
+    )
