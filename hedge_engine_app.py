@@ -96,3 +96,4 @@ if st.button("🧠 Calculate Hedge Table"):
     st.success("✅ Hedge Matrix Generated:")
     st.dataframe(df_display)
  
+ 
