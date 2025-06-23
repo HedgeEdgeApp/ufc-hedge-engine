@@ -98,4 +98,4 @@ if st.button("🧠 Calculate Hedge Table"):
     grid_options = gb.build()
 
     st.markdown("### 📊 Hedge Matrix")
-    AgGrid(display_df, gridOptions=grid_options, height=500, fit_columns_on_grid_load=True) 
+    AgGrid(display_df, gridOptions=grid_options, height=500, fit_columns_on_grid_load=True)  
