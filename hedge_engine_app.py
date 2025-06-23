@@ -61,7 +61,7 @@ if st.button("🧠 Calculate Hedge Table"):
         profit_if_hedge = return_if_hedge - total_staked
 
         data.append({
-            "Hedge Stake ($)": hedge,
+            "Hedge Stake": hedge,
             "Total Wagered": total_staked,
             "Return if Original Fighter Wins": round(return_if_original, 2),
             "Profit if Original Fighter Wins": round(profit_if_original, 2),
@@ -71,13 +71,13 @@ if st.button("🧠 Calculate Hedge Table"):
 
     df = pd.DataFrame(data)
 
-    # Format currency
-    for col in df.columns:
-        if "Return" in col or "Profit" in col or "Wagered" in col or "Hedge Stake" in col:
-            df[col] = df[col].apply(lambda x: f"${x:,.2f}")
+    # Set index to "Hedge Stake"
+    df.set_index("Hedge Stake", inplace=True)
+    df.index.name = "Hedge Stake ($)"  # gives that grey left column a label
 
-    # Move hedge stake column to the far left for visual scroll-locking
-    df.insert(0, "Hedge Stake", df.pop("Hedge Stake ($)"))
+    # Format currency columns
+    for col in df.columns:
+        df[col] = df[col].apply(lambda x: f"${x:,.2f}")
 
     # Scenario summary
     scenario_summary = []
@@ -92,6 +92,5 @@ if st.button("🧠 Calculate Hedge Table"):
     if scenario_summary:
         st.markdown(f"**Scenario:** {' | '.join(scenario_summary)}")
 
-    # Render table with hedge stake on far left and hide default index
     st.success("✅ Hedge Matrix Generated:")
-    st.dataframe(df, hide_index=True, use_container_width=True)
+    st.dataframe(df, use_container_width=True)
