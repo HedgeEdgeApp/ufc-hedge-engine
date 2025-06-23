@@ -15,74 +15,82 @@ st.subheader("🧾 Add Your Bets")
 
 num_bets = st.number_input("How many bets?", min_value=1, max_value=10, value=1, step=1)
 bets = []
+final_bet_index = None
 
 for i in range(num_bets):
-    st.markdown("---")
+    st.markdown(f"---")
     name = st.text_input(f"Name for Bet #{i+1}", value=f"Bet {i+1}", key=f"name_{i}")
     st.markdown(f"#### {name}")
     odds = st.number_input(f"{name} Odds", value=2.00, step=0.01, key=f"odds_{i}")
     stake = st.number_input(f"{name} Stake ($)", value=20.0, step=1.0, format="%.2f", key=f"stake_{i}")
-    won = st.selectbox(f"✅ {name} – win?", options=["TBD", "Yes", "No"], key=f"result_{i}")
-    subject_to_hedge = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_{i}")
-    bets.append({'name': name, 'odds': odds, 'stake': stake, 'won': won, 'hedged': subject_to_hedge})
+    result = st.selectbox(f"✅ {name} – result?", options=["TBD", "Yes", "No"], key=f"result_{i}")
+    is_subject_to_hedge = st.checkbox("☑️ This bet depends on the final outcome (subject to hedge)", key=f"hedge_{i}")
+    is_final_bet = st.checkbox("🏁 Is this the final fight you want to hedge?", key=f"final_{i}")
+    if is_final_bet:
+        final_bet_index = i
+    bets.append({'name': name, 'odds': odds, 'stake': stake, 'result': result, 'hedged': is_subject_to_hedge})
 
-# 💥 Final Fight Details
-st.subheader("💥 Final Fight Details")
-hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)", value="Smith")
-hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
+# Final Fight Details
+hedge_fighter = ""
+hedge_odds = 0.0
 
-# Run calc
+if final_bet_index is not None:
+    st.subheader("💥 Final Fight Hedge Details")
+    hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
+    hedge_odds = st.number_input("Hedge Odds (Decimal)", value=2.30, step=0.01)
+
 if st.button("🧠 Calculate Hedge Table"):
     hedge_steps = list(range(0, 301, 10))
     data = []
 
     for hedge in hedge_steps:
-        total_bets_stake = sum(b['stake'] for b in bets)
-        total_staked = total_bets_stake + hedge
+        total_stake = sum(bet['stake'] for bet in bets)
+        hedge_return = hedge * hedge_odds
+        total_wagered = total_stake + hedge
 
-        # Only count bets not marked TBD
-        bets_return = sum(
-            b['stake'] * b['odds'] for b in bets
-            if b['won'] == "Yes" or (b['won'] == "TBD" and not b['hedged'])
-        )
+        bets_return_if_original = 0
+        for bet in bets:
+            if bet['result'] == "Yes":
+                bets_return_if_original += bet['stake'] * bet['odds']
+            elif bet['result'] == "TBD" and bet['hedged']:
+                bets_return_if_original += bet['stake'] * bet['odds']
 
-        # If hedge hits (final fight wins), then all bets marked 'hedged' are assumed to have lost
-        # Only return from non-hedged wins
-        hedge_wins = all(
-            b['won'] != "Yes" if b['hedged'] else True for b in bets
-        )
-        hedge_return = hedge * hedge_odds if hedge_wins else 0
-
-        # Determine if original (non-hedged bets) return money
-        hedged_loss = any(b['hedged'] and b['won'] == "No" for b in bets)
-        profit_hedge_win = hedge_return - total_staked
-        profit_bets_win = bets_return - total_staked
+        profit_if_original = bets_return_if_original - total_wagered
+        profit_if_hedge = hedge_return - total_wagered if all(
+            bet['result'] == "No" or (bet['result'] == "TBD" and bet['hedged']) for bet in bets
+        ) else hedge_return + sum(
+            bet['stake'] * bet['odds'] for bet in bets if bet['result'] == "Yes" and not bet['hedged']
+        ) - total_wagered
 
         data.append({
-            "Hedge Stake ($)": hedge,
-            "Total Wagered": total_staked,
-            "Return if Original Fighter Wins": round(bets_return, 2),
-            "Profit if Original Fighter Wins": round(profit_bets_win, 2),
+            "Hedge Stake": hedge,
+            "Total Wagered": total_wagered,
+            "Return if Original Fighter Wins": round(bets_return_if_original, 2),
+            "Profit if Original Fighter Wins": round(profit_if_original, 2),
             f"Return if {hedge_fighter} (Hedge) Wins": round(hedge_return, 2),
-            f"Profit if {hedge_fighter} (Hedge) Wins": round(profit_hedge_win, 2),
+            f"Profit if {hedge_fighter} (Hedge) Wins": round(profit_if_hedge, 2),
         })
 
     df = pd.DataFrame(data)
 
-    # 🔒 Pin hedge stake column
-    gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_column("Hedge Stake ($)", pinned="left")
+    st.markdown("### ✅ Scenario Overview")
+    scenario_summary = [
+        f"{bet['name']} ✅" if bet['result'] == "Yes"
+        else f"{bet['name']} ❌" if bet['result'] == "No"
+        else f"{bet['name']} ❓" for bet in bets
+    ]
+    st.markdown("**Scenario:** " + " | ".join(scenario_summary))
+
+    # Format currency
+    df_display = df.copy()
+    for col in df_display.columns:
+        if "Return" in col or "Profit" in col or "Wagered" in col or "Hedge Stake" in col:
+            df_display[col] = df_display[col].apply(lambda x: f"${x:,.2f}")
+
+    # Use AgGrid for pinned first column
+    gb = GridOptionsBuilder.from_dataframe(df_display)
+    gb.configure_column("Hedge Stake", pinned="left")
+    gb.configure_grid_options(domLayout='normal')
     grid_options = gb.build()
 
-    st.success("✅ Hedge Matrix Generated:")
-    AgGrid(df, gridOptions=grid_options, height=500, fit_columns_on_grid_load=True)
-
-    # Scenario summary
-    scenario_summary = []
-    for b in bets:
-        if b['won'] == "TBD" and b['hedged']:
-            scenario_summary.append(f"{b['name']} ❓")
-        else:
-            scenario_summary.append(f"{b['name']} {'✅' if b['won']=='Yes' else '❌'}")
-    if scenario_summary:
-        st.markdown(f"**Scenario:** {' | '.join(scenario_summary)}") 
+    AgGrid(df_display, gridOptions=grid_options, height=400, theme="streamlit")
