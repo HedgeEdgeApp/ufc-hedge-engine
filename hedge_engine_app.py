@@ -88,6 +88,6 @@ if st.button("🧠 Calculate Hedge Table"):
         gridOptions=grid_options,
         update_mode=GridUpdateMode.NO_UPDATE,
         allow_unsafe_jscode=True,
-        height=400,
+        height=400, 
         fit_columns_on_grid_load=True,
     )
