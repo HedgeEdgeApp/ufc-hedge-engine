@@ -52,19 +52,16 @@ if st.button("🧠 Calculate Hedge Table"):
     st.markdown(f"**Scenario:** {' | '.join(scenario_summary)}")
 
     for hedge in hedge_steps:
-        # Separate confirmed bets from final-fight-dependent bets
         confirmed_bets = [b for b in bets if not b['final'] and b['won'] == "Yes"]
         final_fight_bets = [b for b in bets if b['final']]
 
         total_bets_stake = sum(b['stake'] for b in bets)
         total_staked = total_bets_stake + hedge
 
-        # If original fighter wins (bets hit)
         original_return = sum(b['stake'] * b['odds'] for b in confirmed_bets) + \
                           sum(b['stake'] * b['odds'] for b in final_fight_bets)
         profit_original = original_return - total_staked
 
-        # If hedge fighter wins (final fight bets lose)
         hedge_return = hedge * hedge_odds
         profit_hedge = hedge_return + sum(b['stake'] * b['odds'] for b in confirmed_bets) - total_staked
 
@@ -77,9 +74,9 @@ if st.button("🧠 Calculate Hedge Table"):
             f"Profit if {hedge_fighter} (Hedge) Wins": round(profit_hedge, 2),
         })
 
-    df = pd.DataFrame(data)
+    df = pd.DataFrame(data).reset_index(drop=True)  # ← IMPORTANT: remove the default index
 
-    # 🧲 AgGrid with sticky column
+    # 🧲 AgGrid with sticky "Hedge Stake ($)" as the new first column
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_column("Hedge Stake ($)", pinned="left")
     gb.configure_default_column(resizable=True, filter=True, sortable=True)
