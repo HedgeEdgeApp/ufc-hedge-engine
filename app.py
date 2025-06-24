@@ -12,16 +12,12 @@ if "bets" not in st.session_state:
 st.markdown("### ➕ Add Your Bets")
 
 with st.form("bet_form"):
-    col1, col2, col3 = st.columns([1.2, 2, 1.5])
-    with col1:
-        bet_name = st.text_input("Bet name (e.g. Bet #1)")
-        odds = st.number_input("Odds", min_value=1.01, value=2.00)
-        stake = st.number_input("Stake ($)", min_value=0.01, value=10.0)
-    with col2:
-        fighters = st.text_input("Fighter(s) in bet", placeholder="e.g. Fiziev or Allen/Edwards")
-        win_status = st.selectbox("Did this bet win?", ["TBD", "Yes", "No"])
-    with col3:
-        final_flag = st.checkbox("🎯 This bet depends on the final outcome (subject to hedge)")
+    bet_name = st.text_input("Bet name (e.g. Bet #1)")
+    fighters = st.text_input("Fighter(s) in bet", placeholder="e.g. Fiziev or Allen/Edwards")
+    odds = st.number_input("Odds", min_value=1.01, value=2.00)
+    stake = st.number_input("Stake ($)", min_value=0.01, value=10.0)
+    win_status = st.selectbox("Did this bet win?", ["TBD", "Yes", "No"])
+    final_flag = st.checkbox("🎯 This bet depends on the final outcome (subject to hedge)")
 
     submitted = st.form_submit_button("Add Bet")
     if submitted and bet_name and fighters:
@@ -46,12 +42,13 @@ if st.session_state.bets:
     hedge_odds = st.number_input("Odds of hedge bet", min_value=1.01, value=2.00)
     hedge_unit = st.number_input("💵 Hedge Stake Unit", min_value=1, value=10, step=1)
 
-    st.markdown("### 🧾 Scenario")
-    scenario = []
-    for bet in st.session_state.bets:
-        icon = "✅" if bet["result"] == "Yes" else "❌" if bet["result"] == "No" else "❓"
-        scenario.append(f"{bet['fighters']} {icon}")
-    st.markdown(", ".join(scenario))
+    # Scenario summary with consistent emojis and slashes
+    icon_map = {"Yes": "✅", "No": "❌", "TBD": "❓"}
+    scenario = " / ".join(
+        f"{bet['name']} {icon_map.get(bet['result'], '❓')}"
+        for bet in st.session_state.bets
+    )
+    st.markdown(f"**Scenario:** {scenario}")
 
     st.markdown("### 📊 Hedge Table")
 
