@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="UFC Hedge Engine", layout="wide")
-st.title("🤼 UFC Hedge Engine")
+st.title("🤼 Sports Betting Hedge Engine")
 st.markdown("---")
 
 # Store all bets
