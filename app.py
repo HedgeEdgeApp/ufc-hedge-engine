@@ -3,7 +3,7 @@ import pandas as pd
 
 st.set_page_config(page_title="UFC Hedge Engine", layout="wide")
 
-st.title("🧠 UFC Hedge Engine")
+st.title("🧠 Sport Betting Hedge Engine")
 st.markdown("Calculate potential hedge outcomes for your UFC bets.")
 
 bets = []
