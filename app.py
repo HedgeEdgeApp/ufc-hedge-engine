@@ -29,7 +29,7 @@ for i in range(num_bets):
         })
 
 st.markdown("---")
-st.subheader("🔚 Final Fight Details")
+st.subheader("💥 Final Fight Details")
 
 col1, col2 = st.columns(2)
 with col1:
