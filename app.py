@@ -2,91 +2,83 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="UFC Hedge Engine", layout="wide")
-
-st.title("🧠 Sport Betting Hedge Engine")
-st.markdown("Calculate potential hedge outcomes for your UFC bets.")
-
-bets = []
-num_bets = st.number_input("How many bets are you placing?", min_value=1, step=1, value=3)
-
-for i in range(num_bets):
-    st.markdown("---")
-    with st.container():
-        st.subheader(f"🧾 Bet #{i+1}")
-        name = st.text_input(f"Name for Bet #{i+1}", key=f"name_{i}", value=f"Bet #{i+1}")
-        odds = st.number_input(f"Odds for {name}", min_value=1.01, step=0.01, key=f"odds_{i}")
-        stake = st.number_input(f"Stake for {name}", min_value=0.0, step=1.0, key=f"stake_{i}")
-        win_state = st.selectbox(
-            f"Did this bet win?", options=["TBD", "Yes", "No"], key=f"win_{i}"
-        )
-        is_final_fight = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_{i}")
-        bets.append({
-            "name": name,
-            "odds": odds,
-            "stake": stake,
-            "win_state": win_state,
-            "is_final": is_final_fight
-        })
-
+st.title("🤼 UFC Hedge Engine")
 st.markdown("---")
-st.subheader("💥 Final Fight Details")
 
-col1, col2 = st.columns(2)
-with col1:
-    hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
-with col2:
-    hedge_odds = st.number_input("Odds of hedge fighter", min_value=1.01, step=0.01)
+# Store all bets
+bets = []
 
-if hedge_fighter:
-    st.markdown("---")
-    st.subheader("📊 Outcome Table")
+# Number of bets
+num_bets = st.number_input("How many bets do you want to enter?", min_value=1, step=1, value=1)
 
-    hedge_range = range(0, 310, 10)
-    table_rows = []
+# Collect each bet's data
+for i in range(num_bets):
+    st.markdown(f"### 🧾 Bet #{i+1}")
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        name = st.text_input(f"Bet #{i+1} Name", key=f"name_{i}")
+    with col2:
+        odds = st.number_input(f"Odds", min_value=1.0, step=0.01, key=f"odds_{i}")
+    with col3:
+        stake = st.number_input(f"Stake ($)", min_value=0.0, step=1.0, key=f"stake_{i}")
+    with col4:
+        result = st.selectbox("Did it win?", ["TBD", "Yes", "No"], key=f"result_{i}")
+    with col5:
+        subject_to_hedge = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_dependent_{i}")
+    
+    bets.append({
+        "name": name,
+        "odds": odds,
+        "stake": stake,
+        "result": result,
+        "subject_to_hedge": subject_to_hedge
+    })
 
-    # Build scenario text (above the table)
-    scenario_text = "Scenario: "
+# Final fight details
+st.markdown("### 💥 Final Fight Details")
+final_fight_col1, final_fight_col2 = st.columns(2)
+with final_fight_col1:
+    hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)", key="hedge_fighter")
+with final_fight_col2:
+    hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01, key="hedge_odds")
+
+# Calculate outcomes
+max_hedge = 300
+rows = []
+
+for hedge_stake in range(0, max_hedge + 1, 10):
+    total_staked = sum(bet['stake'] for bet in bets) + hedge_stake
+
+    # Determine if original fighter wins
+    original_returns = 0
     for bet in bets:
-        if bet["win_state"] == "Yes":
-            scenario_text += f"✅ {bet['name']} "
-        elif bet["win_state"] == "No":
-            scenario_text += f"❌ {bet['name']} "
-        elif bet["win_state"] == "TBD" and bet["is_final"]:
-            scenario_text += f"❓ {bet['name']} "
+        if bet['result'] == "Yes":
+            original_returns += bet['odds'] * bet['stake']
+        elif bet['result'] == "TBD" and not bet['subject_to_hedge']:
+            original_returns += bet['odds'] * bet['stake']
+    profit_if_original = original_returns - total_staked
 
-    st.markdown(f"**{scenario_text.strip()}**")
+    # Hedge outcome
+    return_if_hedge = hedge_stake * hedge_odds
+    profit_if_hedge = return_if_hedge - total_staked
 
-    for hedge_stake in hedge_range:
-        total_wagered = sum(b["stake"] for b in bets) + hedge_stake
+    rows.append({
+        "Hedge Stake": f"${hedge_stake:.2f}",
+        "Total Wagered": f"${total_staked:.2f}",
+        "Return if Original Wins": f"${original_returns:.2f}",
+        "Profit if Original Wins": f"${profit_if_original:.2f}",
+        f"Return if {hedge_fighter} (Hedge) Wins": f"${return_if_hedge:.2f}",
+        f"Profit if {hedge_fighter} (Hedge) Wins": f"${profit_if_hedge:.2f}"
+    })
 
-        return_if_original = 0
-        return_if_hedge = 0
+df = pd.DataFrame(rows)
 
-        for b in bets:
-            if b["win_state"] == "Yes":
-                return_if_original += b["stake"] * b["odds"]
-            elif b["win_state"] == "TBD" and b["is_final"]:
-                return_if_original += b["stake"] * b["odds"]
+# Emoji Scenario Display
+scenario_parts = []
+for bet in bets:
+    emoji = "❓" if bet['result'] == "TBD" else "✅" if bet['result'] == "Yes" else "❌"
+    scenario_parts.append(f"{bet['name']} {emoji}")
+st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
-        for b in bets:
-            if b["win_state"] == "TBD" and b["is_final"]:
-                continue  # These lose if hedge wins
-            elif b["win_state"] == "Yes":
-                return_if_hedge += b["stake"] * b["odds"]
-
-        return_if_hedge += hedge_stake * hedge_odds
-
-        profit_if_original = return_if_original - total_wagered
-        profit_if_hedge = return_if_hedge - total_wagered
-
-        table_rows.append({
-            "Hedge Stake": f"${hedge_stake:.2f}",
-            "Total Wagered": f"${total_wagered:.2f}",
-            f"Return if Original Fighter Wins": f"${return_if_original:.2f}",
-            f"Profit if Original Fighter Wins": f"${profit_if_original:.2f}",
-            f"Return if {hedge_fighter} (Hedge) Wins": f"${return_if_hedge:.2f}",
-            f"Profit if {hedge_fighter} (Hedge) Wins": f"${profit_if_hedge:.2f}"
-        })
-
-    df = pd.DataFrame(table_rows)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+# Show result table
+st.dataframe(df, hide_index=True, use_container_width=True)
