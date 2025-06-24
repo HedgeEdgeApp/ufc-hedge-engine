@@ -33,33 +33,30 @@ st.markdown("### 💥 Final Fight Details")
 hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
 hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01)
 
-# NEW: Hedge Stake Configuration
-st.markdown("### ⚙️ Hedge Settings")
-hedge_unit = st.number_input("Hedge Stake Unit ($)", min_value=0.01, step=0.01, value=10.00)
-max_hedge = st.number_input("Maximum Hedge Stake ($)", min_value=hedge_unit, step=hedge_unit, value=300.00)
+# Adjustable hedge stake unit
+st.markdown("### 🧮 Hedge Stake Settings")
+unit_size = st.number_input("Hedge Stake Unit ($)", min_value=1, max_value=500, value=10, step=1)
+max_hedge = unit_size * 30  # max 30 units shown
 
 # Hedge matrix generation
-def frange(start, stop, step):
-    while start <= stop:
-        yield round(start, 2)
-        start += step
-
 rows = []
 
-for hedge_stake in frange(0, max_hedge, hedge_unit):
+for hedge_stake in range(0, max_hedge + 1, unit_size):
     total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
-    # Original fighter outcome
+    # Return if Original wins
     original_returns = 0
     for bet in bets:
         if bet["result"] == "Yes":
+            original_returns += bet["stake"] * bet["odds"]
+        elif bet["result"] == "TBD" and bet["subject_to_hedge"]:
             original_returns += bet["stake"] * bet["odds"]
         elif bet["result"] == "TBD" and not bet["subject_to_hedge"]:
             original_returns += bet["stake"] * bet["odds"]
 
     profit_if_original = original_returns - total_staked
 
-    # Hedge outcome
+    # Return if Hedge wins
     hedge_return = hedge_stake * hedge_odds
     profit_if_hedge = hedge_return - total_staked
 
@@ -74,7 +71,7 @@ for hedge_stake in frange(0, max_hedge, hedge_unit):
 
 df = pd.DataFrame(rows)
 
-# Emoji summary (goes ABOVE the table)
+# Emoji summary above the table
 scenario_parts = []
 for bet in bets:
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
@@ -82,5 +79,5 @@ for bet in bets:
 st.markdown("### 📋 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
-# Show final hedge matrix table
+# Final hedge matrix table
 st.dataframe(df, hide_index=True, use_container_width=True)
