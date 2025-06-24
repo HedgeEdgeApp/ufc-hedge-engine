@@ -33,11 +33,20 @@ st.markdown("### 💥 Final Fight Details")
 hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
 hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01)
 
+# NEW: Hedge Stake Configuration
+st.markdown("### ⚙️ Hedge Settings")
+hedge_unit = st.number_input("Hedge Stake Unit ($)", min_value=0.01, step=0.01, value=10.00)
+max_hedge = st.number_input("Maximum Hedge Stake ($)", min_value=hedge_unit, step=hedge_unit, value=300.00)
+
 # Hedge matrix generation
-max_hedge = 300
+def frange(start, stop, step):
+    while start <= stop:
+        yield round(start, 2)
+        start += step
+
 rows = []
 
-for hedge_stake in range(0, max_hedge + 1, 10):
+for hedge_stake in frange(0, max_hedge, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
     # Original fighter outcome
