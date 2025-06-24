@@ -1,107 +1,77 @@
-
 import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="UFC Hedge Engine", layout="wide")
+st.title("🤼 UFC Hedge Engine")
+st.markdown("---")
 
-# --- Sidebar: Final Fight Hedge Info ---
-st.sidebar.header("🧨 Final Fight Details")
-hedge_final_fight_selected = st.sidebar.checkbox("Is there a final fight you want to hedge?")
-hedge_fighter = None
-hedge_odds = None
-if hedge_final_fight_selected:
-    hedge_fighter = st.sidebar.text_input("Who are you hedging on in the final fight? (e.g. Smith)", "")
-    hedge_odds = st.sidebar.number_input("Hedge fighter's odds (decimal)", min_value=1.01, step=0.01)
+# Store all bets
+bets = []
 
-# --- Main App ---
-st.title("💸 UFC Hedge Engine")
+# Number of bets
+num_bets = st.number_input("How many bets do you want to enter?", min_value=1, step=1, value=1)
 
-st.markdown("### ➕ Add your bets")
-with st.form(key="bet_form"):
-    bet_name = st.text_input("Bet name (e.g. Rountree ML, Parlay #2, Fiziev KO)", key="bet_name")
-    odds = st.number_input("Odds", min_value=1.01, step=0.01, key="odds")
-    stake = st.number_input("Stake ($)", min_value=0.0, step=1.0, key="stake")
-    result = st.selectbox("Has this bet won?", ["TBD", "Yes", "No"], key="result")
-    is_final_fight_bet = st.checkbox("This bet depends on the final outcome (subject to hedge)", key="hedge_checkbox")
-    submit = st.form_submit_button("Add Bet")
+# Collect each bet's data (stacked layout)
+for i in range(num_bets):
+    st.markdown(f"### 🧾 Bet #{i+1}")
+    name = st.text_input(f"Bet #{i+1} Name", key=f"name_{i}")
+    odds = st.number_input("Odds", min_value=1.0, step=0.01, key=f"odds_{i}")
+    stake = st.number_input("Stake ($)", min_value=0.0, step=1.0, key=f"stake_{i}")
+    result = st.selectbox("Did it win?", ["TBD", "Yes", "No"], key=f"result_{i}")
+    subject_to_hedge = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_dependent_{i}")
 
-if "bets" not in st.session_state:
-    st.session_state.bets = []
-
-if submit:
-    st.session_state.bets.append({
-        "bet_name": bet_name,
+    bets.append({
+        "name": name,
         "odds": odds,
         "stake": stake,
         "result": result,
-        "is_final_fight_bet": is_final_fight_bet
+        "subject_to_hedge": subject_to_hedge
     })
 
-# Display current bets
-if st.session_state.bets:
-    st.markdown("### 🧾 Current Bets")
-    for i, bet in enumerate(st.session_state.bets):
-        st.write(f"**Bet #{i + 1}** — {bet['bet_name']} | Odds: {bet['odds']} | Stake: ${bet['stake']} | Won: {bet['result']} | Subject to Final Fight: {'✅' if bet['is_final_fight_bet'] else '❌'}")
+# Final fight hedge details
+st.markdown("### 💥 Final Fight Details")
+hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
+hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01)
 
-# --- Scenario Summary ---
-def get_status_emoji(result):
-    if result == "Yes":
-        return "✅"
-    elif result == "No":
-        return "❌"
-    else:
-        return "❓"
+# Hedge matrix generation
+max_hedge = 300
+rows = []
 
-if st.session_state.bets:
-    st.markdown("### 🎯 Scenario:")
-    scenario_labels = []
-    for bet in st.session_state.bets:
-        if not bet['is_final_fight_bet']:
-            label = f"{bet['bet_name']} {get_status_emoji(bet['result'])}"
-            scenario_labels.append(label)
-    st.markdown(" / ".join(scenario_labels))
+for hedge_stake in range(0, max_hedge + 1, 10):
+    total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
-# --- Hedge Stake Table Generator ---
-def calculate_returns(hedge_unit, hedge_fighter, hedge_odds, final_fight_selected):
-    rows = []
-    for i in range(31):
-        hedge_stake = i * hedge_unit
-        total_wagered = hedge_stake + sum(bet["stake"] for bet in st.session_state.bets)
+    # Original fighter outcome
+    original_returns = 0
+    for bet in bets:
+        if bet["result"] == "Yes":
+            original_returns += bet["stake"] * bet["odds"]
+        elif bet["result"] == "TBD" and not bet["subject_to_hedge"]:
+            original_returns += bet["stake"] * bet["odds"]
 
-        original_return = 0.0
-        hedge_return = hedge_stake * hedge_odds
+    profit_if_original = original_returns - total_staked
 
-        for bet in st.session_state.bets:
-            won = bet["result"] == "Yes"
-            if bet["is_final_fight_bet"]:
-                if final_fight_selected:
-                    if hedge_fighter and won:
-                        original_return += bet["stake"] * bet["odds"]
-                else:
-                    original_return += bet["stake"] * bet["odds"] if won else 0
-            else:
-                original_return += bet["stake"] * bet["odds"] if won else 0
-                if bet["result"] == "TBD":
-                    total_wagered -= bet["stake"]
+    # Hedge outcome
+    hedge_return = hedge_stake * hedge_odds
+    profit_if_hedge = hedge_return - total_staked
 
-        original_profit = original_return - total_wagered
-        hedge_profit = hedge_return - total_wagered
+    rows.append({
+        "Hedge Stake": f"${hedge_stake:.2f}",
+        "Total Wagered": f"${total_staked:.2f}",
+        "Return if Original Wins": f"${original_returns:.2f}",
+        "Profit if Original Wins": f"${profit_if_original:.2f}",
+        f"Return if {hedge_fighter} (Hedge) Wins": f"${hedge_return:.2f}",
+        f"Profit if {hedge_fighter} (Hedge) Wins": f"${profit_if_hedge:.2f}",
+    })
 
-        rows.append({
-            "Hedge Stake ($)": hedge_stake,
-            f"Total Wagered ($)": total_wagered,
-            f"Return if Original Fighter Wins ($)": original_return,
-            f"Profit if Original Fighter Wins ($)": original_profit,
-            f"Return if {hedge_fighter} (Hedge) Wins ($)": hedge_return,
-            f"Profit if {hedge_fighter} (Hedge) Wins ($)": hedge_profit
-        })
-    return pd.DataFrame(rows)
+df = pd.DataFrame(rows)
 
-# --- Hedge Stake Table Display ---
-if hedge_final_fight_selected and hedge_fighter and hedge_odds and st.session_state.bets:
-    st.markdown("### 💡 Choose Your Hedge Stake Unit")
-    hedge_unit = st.number_input("Hedge Stake Unit ($)", min_value=1, max_value=500, value=10, step=1)
-    st.markdown("### 📊 Hedge Outcome Matrix")
+# Emoji summary (goes ABOVE the table)
+scenario_parts = []
+for bet in bets:
+    emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
+    scenario_parts.append(f"{bet['name']} {emoji}")
+st.markdown("### 📋 Scenario Summary")
+st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
-    df = calculate_returns(hedge_unit, hedge_fighter, hedge_odds, hedge_final_fight_selected)
-    st.dataframe(df, hide_index=True, use_container_width=True)
+# Show final hedge matrix table
+st.dataframe(df, hide_index=True, use_container_width=True)
