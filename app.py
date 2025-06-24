@@ -43,24 +43,30 @@ rows = []
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
-    # Original fighter outcome logic
-    original_returns = 0
-    for bet in bets:
-        if bet["result"] in ["Yes", "TBD"]:
-            original_returns += bet["stake"] * bet["odds"]
+    # Return if Original Wins: count ALL bets marked as Yes or TBD
+    original_returns = sum(
+        bet["stake"] * bet["odds"]
+        for bet in bets
+        if bet["result"] in ["Yes", "TBD"]
+    )
 
-    profit_if_original = original_returns - total_staked
+    # Return if Hedge Wins: only include bets that are YES or TBD AND NOT subject to hedge
+    hedge_returns = sum(
+        bet["stake"] * bet["odds"]
+        for bet in bets
+        if bet["result"] in ["Yes", "TBD"] and not bet["subject_to_hedge"]
+    )
 
-    # Hedge outcome
     hedge_return = hedge_stake * hedge_odds
-    profit_if_hedge = hedge_return - total_staked
+    profit_if_original = original_returns - total_staked
+    profit_if_hedge = hedge_return + hedge_returns - total_staked
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
         "Total Wagered": f"${total_staked:.2f}",
         "Return if Original Wins": f"${original_returns:.2f}",
         "Profit if Original Wins": f"${profit_if_original:.2f}",
-        f"Return if {hedge_fighter} (Hedge) Wins": f"${hedge_return:.2f}",
+        f"Return if {hedge_fighter} (Hedge) Wins": f"${hedge_return + hedge_returns:.2f}",
         f"Profit if {hedge_fighter} (Hedge) Wins": f"${profit_if_hedge:.2f}",
     })
 
