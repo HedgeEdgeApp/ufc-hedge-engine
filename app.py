@@ -6,7 +6,7 @@ st.set_page_config(page_title="UFC Hedge Engine", layout="wide")
 # 👇 Display the banner image
 st.image("hedge_edge_banner.png", use_container_width=True)
 
-st.title("🤼 UFC Hedge Engine")
+st.title("Sport Betting Hedge Engine")
 st.markdown("---")
 
 # Store all bets
