@@ -1,8 +1,11 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="UFC Hedge Engine", layout="wide")
-st.title("🤼 UFC Hedge Engine")
+st.set_page_config(page_title="Sports Betting Hedge Engine", layout="wide")
+
+# Display banner image (centered, responsive)
+st.image("hedge_edge_banner.png", use_container_width=True)
+
 st.markdown("---")
 
 # Store all bets
