@@ -31,10 +31,10 @@ for i in range(num_bets):
         "subject_to_hedge": subject_to_hedge
     })
 
-# Final fight hedge details
-st.markdown("### 💣 Final Fight Details")
-hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
-hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01)
+# Final hedge details
+st.markdown("### 💣 Final Event Details")
+hedge_fighter = st.text_input("Who are you hedging on in the final event? (e.g. Smith)")
+hedge_odds = st.number_input("Odds for the hedge event", min_value=1.0, step=0.01)
 
 # Hedge Stake Unit Selector
 hedge_unit = st.number_input("Hedge Stake Unit ($)", min_value=1, step=1, value=10)
