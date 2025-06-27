@@ -33,43 +33,51 @@ st.markdown("### 💥 Final Fight Details")
 hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
 hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01)
 
+# Hedge Stake Unit Selector
+hedge_unit = st.number_input("Hedge Stake Unit ($)", min_value=1, step=1, value=10)
+max_hedge = st.number_input("Maximum Hedge Stake ($)", min_value=hedge_unit, step=hedge_unit, value=300)
+
 # Hedge matrix generation
-max_hedge = 300
 rows = []
 
-for hedge_stake in range(0, max_hedge + 1, 10):
+for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
-    # Original fighter outcome
-    original_returns = 0
-    for bet in bets:
-        if bet["result"] == "Yes":
-            original_returns += bet["stake"] * bet["odds"]
-        elif bet["result"] == "TBD" and not bet["subject_to_hedge"]:
-            original_returns += bet["stake"] * bet["odds"]
+    # Return if Original Wins: count ALL bets marked as Yes or TBD
+    original_returns = sum(
+        bet["stake"] * bet["odds"]
+        for bet in bets
+        if bet["result"] in ["Yes", "TBD"]
+    )
 
-    profit_if_original = original_returns - total_staked
+    # Return if Hedge Wins: only include bets that are YES or TBD AND NOT subject to hedge
+    hedge_returns = sum(
+        bet["stake"] * bet["odds"]
+        for bet in bets
+        if bet["result"] in ["Yes", "TBD"] and not bet["subject_to_hedge"]
+    )
 
-    # Hedge outcome
     hedge_return = hedge_stake * hedge_odds
-    profit_if_hedge = hedge_return - total_staked
+    profit_if_original = original_returns - total_staked
+    profit_if_hedge = hedge_return + hedge_returns - total_staked
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
         "Total Wagered": f"${total_staked:.2f}",
         "Return if Original Wins": f"${original_returns:.2f}",
         "Profit if Original Wins": f"${profit_if_original:.2f}",
-        f"Return if {hedge_fighter} (Hedge) Wins": f"${hedge_return:.2f}",
+        f"Return if {hedge_fighter} (Hedge) Wins": f"${hedge_return + hedge_returns:.2f}",
         f"Profit if {hedge_fighter} (Hedge) Wins": f"${profit_if_hedge:.2f}",
     })
 
 df = pd.DataFrame(rows)
 
-# Emoji summary (goes ABOVE the table)
+# Emoji scenario summary
 scenario_parts = []
 for bet in bets:
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
     scenario_parts.append(f"{bet['name']} {emoji}")
+
 st.markdown("### 📋 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
