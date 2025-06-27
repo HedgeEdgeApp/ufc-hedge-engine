@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Sports Betting Hedge Engine (Test Version)", layout="wide")
+st.set_page_config(page_title="Sports Betting Hedge Engine", layout="wide")
 
-# Display banner
+# Display banner image (optional)
 st.image("hedge_edge_banner.png", use_container_width=True)
+
 st.markdown("---")
 
 # Store all bets
@@ -13,15 +14,15 @@ bets = []
 # Number of bets
 num_bets = st.number_input("How many bets do you want to enter?", min_value=1, step=1, value=1)
 
-# Collect bet info
+# Collect each bet's data (stacked layout)
 for i in range(num_bets):
     st.markdown(f"### 🧾 Bet #{i+1}")
     name = st.text_input(f"Bet #{i+1} Name", key=f"name_{i}")
     odds = st.number_input("Odds", min_value=1.0, step=0.01, key=f"odds_{i}")
     stake = st.number_input("Stake ($)", min_value=0.0, step=1.0, key=f"stake_{i}")
     result = st.selectbox("Did it win?", ["TBD", "Yes", "No"], key=f"result_{i}")
-    subject_to_hedge = st.checkbox("This bet depends on the final event (subject to hedge)", key=f"hedge_dependent_{i}")
-    hedge_side_exposure = st.checkbox("This bet includes the hedge fighter (hedge-side exposure)", key=f"hedge_exposure_{i}")
+    subject_to_hedge = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_dependent_{i}")
+    hedge_side_exposure = st.checkbox("This bet includes the hedge fighter (hedge side exposure)", key=f"hedge_side_{i}")
 
     bets.append({
         "name": name,
@@ -32,33 +33,33 @@ for i in range(num_bets):
         "hedge_side_exposure": hedge_side_exposure
     })
 
-# Final Event
+# Final Event Details
 st.markdown("### 💣 Final Event Details")
 hedge_fighter = st.text_input("Who are you hedging on in the final event? (e.g. Smith)")
 hedge_odds = st.number_input("Odds for the hedge event", min_value=1.0, step=0.01)
 
-# Stake options
+# Hedge Stake Unit Selector
 hedge_unit = st.number_input("Hedge Stake Unit ($)", min_value=1, step=1, value=10)
 max_hedge = st.number_input("Maximum Hedge Stake ($)", min_value=hedge_unit, step=hedge_unit, value=300)
 
-# Matrix generation
+# Hedge matrix generation
 rows = []
 
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
-    total_staked = sum(b["stake"] for b in bets) + hedge_stake
+    total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
-    # Original = all 'Yes' or 'TBD' bets (regardless of hedge exposure)
+    # Return if Original Wins: include all bets marked Yes or TBD that are NOT hedge side exposure
     original_returns = sum(
-        b["stake"] * b["odds"]
-        for b in bets
-        if b["result"] in ["Yes", "TBD"]
+        bet["stake"] * bet["odds"]
+        for bet in bets
+        if bet["result"] in ["Yes", "TBD"] and not bet["hedge_side_exposure"]
     )
 
-    # Hedge = hedge-side exposure bets (plus the hedge bet itself)
+    # Return if Hedge Wins: include all bets marked Yes or TBD that ARE hedge side exposure
     hedge_returns = sum(
-        b["stake"] * b["odds"]
-        for b in bets
-        if b["result"] in ["Yes", "TBD"] and b["hedge_side_exposure"]
+        bet["stake"] * bet["odds"]
+        for bet in bets
+        if bet["result"] in ["Yes", "TBD"] and bet["hedge_side_exposure"]
     )
 
     hedge_return = hedge_stake * hedge_odds
@@ -76,7 +77,7 @@ for hedge_stake in range(0, max_hedge + 1, hedge_unit):
 
 df = pd.DataFrame(rows)
 
-# Scenario summary
+# Scenario Summary
 scenario_parts = []
 for bet in bets:
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
@@ -85,5 +86,5 @@ for bet in bets:
 st.markdown("### 💥 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
-# Display final matrix
+# Show hedge matrix
 st.dataframe(df, hide_index=True, use_container_width=True)
