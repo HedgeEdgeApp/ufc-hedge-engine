@@ -32,7 +32,7 @@ for i in range(num_bets):
     })
 
 # Final fight hedge details
-st.markdown("### 💥 Final Fight Details")
+st.markdown("### 💣 Final Fight Details")
 hedge_fighter = st.text_input("Who are you hedging on in the final fight? (e.g. Smith)")
 hedge_odds = st.number_input("Odds for hedge fighter", min_value=1.0, step=0.01)
 
@@ -81,9 +81,8 @@ for bet in bets:
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
     scenario_parts.append(f"{bet['name']} {emoji}")
 
-st.markdown("### 📋 Scenario Summary")
+st.markdown("### 💥 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
 # Show final hedge matrix table
 st.dataframe(df, hide_index=True, use_container_width=True)
-
