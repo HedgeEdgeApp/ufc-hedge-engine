@@ -4,14 +4,7 @@ import pandas as pd
 st.set_page_config(page_title="Sports Betting Hedge Engine", layout="wide")
 
 # Display banner image (centered, responsive)
-st.markdown(
-    """
-    <div style='display: flex; justify-content: center; padding: 20px 0;'>
-        <img src='hedge_edge_banner.png' style='max-width: 100%; height: auto;' />
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.image("hedge_edge_banner.png", use_container_width=True)
 
 st.markdown("---")
 
@@ -93,3 +86,4 @@ st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
 # Show final hedge matrix table
 st.dataframe(df, hide_index=True, use_container_width=True)
+
