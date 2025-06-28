@@ -16,7 +16,7 @@ num_bets = st.number_input("How many bets do you want to enter?", min_value=1, s
 
 # Collect each bet's data (stacked layout)
 for i in range(num_bets):
-    st.markdown(f"### 🧾 Bet #{i+1}")
+    st.markdown(f"### ℹ️ Bet #{i+1}")
     name = st.text_input(f"Bet #{i+1} Name", key=f"name_{i}")
     odds = st.number_input("Odds", min_value=1.0, step=0.01, key=f"odds_{i}")
     stake = st.number_input("Stake ($)", min_value=0.0, step=1.0, key=f"stake_{i}")
@@ -61,54 +61,69 @@ def adjusted_return(bet):
         return bet["stake"] * (bet["odds"] - 1)
     return bet["stake"] * bet["odds"]
 
+# Determine if any bet is affected by the hedge
+any_hedge_bets = any(bet["subject_to_hedge"] for bet in bets)
+
 # Hedge matrix generation
 rows = []
-real_return_a = bonus_return_a = real_profit_a = bonus_profit_a = 0
-real_return_b = bonus_return_b = real_profit_b = bonus_profit_b = 0
+real_return_a = bonus_return_a = real_return_b = bonus_return_b = 0
 
-for hedge_stake in range(0, max_hedge + 1, hedge_unit):
-    total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
+if any_hedge_bets:
+    for hedge_stake in range(0, max_hedge + 1, hedge_unit):
+        total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
 
-    # Return if Fighter A wins
-    fighter_a_returns = sum(
-        adjusted_return(bet)
-        for bet in bets
-        if not bet["hedge_side_exposure"] and (bet["result"] in ["Yes", "TBD"])
-    )
+        # Return if Fighter A wins
+        fighter_a_returns = sum(
+            adjusted_return(bet)
+            for bet in bets
+            if not bet["hedge_side_exposure"] and (bet["result"] in ["Yes", "TBD"])
+        )
 
-    # Return if Fighter B wins
-    fighter_b_returns = sum(
-        adjusted_return(bet)
-        for bet in bets
-        if (bet["hedge_side_exposure"] or not bet["subject_to_hedge"]) and (bet["result"] in ["Yes", "TBD"])
-    )
+        # Return if Fighter B wins
+        fighter_b_returns = sum(
+            adjusted_return(bet)
+            for bet in bets
+            if (bet["hedge_side_exposure"] or not bet["subject_to_hedge"]) and (bet["result"] in ["Yes", "TBD"])
+        )
 
-    hedge_return = hedge_stake * hedge_odds
+        hedge_return = hedge_stake * hedge_odds
+        profit_if_a = fighter_a_returns - total_staked
+        profit_if_b = hedge_return + fighter_b_returns - total_staked
+
+        real_return_a = sum(
+            adjusted_return(bet)
+            for bet in bets
+            if not bet["bonus_cash"] and not bet["hedge_side_exposure"] and bet["result"] in ["Yes", "TBD"]
+        )
+        bonus_return_a = fighter_a_returns - real_return_a
+
+        real_return_b = sum(
+            adjusted_return(bet)
+            for bet in bets
+            if not bet["bonus_cash"] and (bet["hedge_side_exposure"] or not bet["subject_to_hedge"]) and bet["result"] in ["Yes", "TBD"]
+        )
+        bonus_return_b = fighter_b_returns - real_return_b
+
+        rows.append({
+            "Hedge Stake": f"${hedge_stake:.2f}",
+            "Total Wagered": f"${total_staked:.2f}",
+            f"Return if {fighter_a} (Original) Wins": f"${fighter_a_returns:.2f}",
+            f"Profit if {fighter_a} (Original) Wins": f"${profit_if_a:.2f}",
+            f"Return if {fighter_b} (Hedge) Wins": f"${hedge_return + fighter_b_returns:.2f}",
+            f"Profit if {fighter_b} (Hedge) Wins": f"${profit_if_b:.2f}"
+        })
+else:
+    st.info("ℹ️ None of your bets are affected by the final event, so hedging scenarios are not applicable.")
+    total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"])
+    fighter_a_returns = sum(adjusted_return(bet) for bet in bets if bet["result"] in ["Yes", "TBD"])
     profit_if_a = fighter_a_returns - total_staked
-    profit_if_b = hedge_return + fighter_b_returns - total_staked
-
-    # Real vs. Bonus breakdown
-    real_return_a = sum(
-        adjusted_return(bet)
-        for bet in bets
-        if not bet["bonus_cash"] and not bet["hedge_side_exposure"] and bet["result"] in ["Yes", "TBD"]
-    )
-    bonus_return_a = fighter_a_returns - real_return_a
-
-    real_return_b = sum(
-        adjusted_return(bet)
-        for bet in bets
-        if not bet["bonus_cash"] and (bet["hedge_side_exposure"] or not bet["subject_to_hedge"]) and bet["result"] in ["Yes", "TBD"]
-    )
-    bonus_return_b = fighter_b_returns - real_return_b
-
     rows.append({
-        "Hedge Stake": f"${hedge_stake:.2f}",
+        "Hedge Stake": "$0.00",
         "Total Wagered": f"${total_staked:.2f}",
         f"Return if {fighter_a} (Original) Wins": f"${fighter_a_returns:.2f}",
         f"Profit if {fighter_a} (Original) Wins": f"${profit_if_a:.2f}",
-        f"Return if {fighter_b} (Hedge) Wins": f"${hedge_return + fighter_b_returns:.2f}",
-        f"Profit if {fighter_b} (Hedge) Wins": f"${profit_if_b:.2f}"
+        f"Return if {fighter_b} (Hedge) Wins": f"${fighter_a_returns:.2f}",
+        f"Profit if {fighter_b} (Hedge) Wins": f"${profit_if_a:.2f}"
     })
 
 df = pd.DataFrame(rows)
