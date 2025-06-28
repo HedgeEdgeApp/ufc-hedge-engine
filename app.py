@@ -59,14 +59,14 @@ for hedge_stake in range(0, max_hedge + 1, hedge_unit):
 
     # Return if Fighter A Wins: include all relevant bets
     fighter_a_returns = sum(
-        bet["stake"] * bet["odds"]
+        (bet["stake"] * bet["odds"] - (0 if bet["bonus_cash"] else bet["stake"]))
         for bet in bets
         if bet["result"] in ["Yes", "TBD"] and not bet["hedge_side_exposure"]
     )
 
     # Return if Fighter B Wins: include hedge-side and independent winners
     fighter_b_returns = sum(
-        bet["stake"] * bet["odds"]
+        (bet["stake"] * bet["odds"] - (0 if bet["bonus_cash"] else bet["stake"]))
         for bet in bets
         if bet["result"] in ["Yes", "TBD"] and (
             bet["hedge_side_exposure"] or not bet["subject_to_hedge"]
@@ -74,13 +74,13 @@ for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     )
 
     hedge_return = hedge_stake * hedge_odds
-    profit_if_a = fighter_a_returns - total_staked
-    profit_if_b = hedge_return + fighter_b_returns - total_staked
+    profit_if_a = fighter_a_returns - hedge_stake
+    profit_if_b = hedge_return + fighter_b_returns - hedge_stake
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
         "Total Wagered": f"${total_staked:.2f}",
-        f"Return if {fighter_a} (Original) Wins": f"${fighter_a_returns:.2f}",
+        f"Return if {fighter_a} (Original) Wins": f"${fighter_a_returns + hedge_stake:.2f}",
         f"Profit if {fighter_a} (Original) Wins": f"${profit_if_a:.2f}",
         f"Return if {fighter_b} (Hedge) Wins": f"${hedge_return + fighter_b_returns:.2f}",
         f"Profit if {fighter_b} (Hedge) Wins": f"${profit_if_b:.2f}"
