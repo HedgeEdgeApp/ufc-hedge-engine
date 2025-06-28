@@ -51,31 +51,39 @@ max_hedge = st.number_input("Maximum Hedge Stake ($)", min_value=hedge_unit, ste
 # Warning at the end of Final Event Details
 st.warning("\U0001F6A8 If you change the hedge fighter in the 'Final Event Details', make sure to revisit and update the checkboxes in each bet. Accurate results depend on the correct use of 'subject to hedge' and 'hedge side exposure'.")
 
+# Helper function to compute real return (excluding bonus stake for bonus bets)
+def adjusted_return(bet):
+    if bet["result"] not in ["Yes", "TBD"]:
+        return 0
+    if bet["bonus_cash"]:
+        return bet["stake"] * (bet["odds"] - 1)
+    return bet["stake"] * bet["odds"]
+
 # Hedge matrix generation
 rows = []
 
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
 
-    # Return if Fighter A Wins: include all relevant bets
+    # Return and profit if Fighter A wins
     fighter_a_returns = sum(
-        (bet["stake"] * bet["odds"] - (0 if bet["bonus_cash"] else bet["stake"]))
+        adjusted_return(bet)
         for bet in bets
-        if bet["result"] in ["Yes", "TBD"] and not bet["hedge_side_exposure"]
+        if not bet["hedge_side_exposure"]
     )
+    fighter_a_profits = fighter_a_returns
 
-    # Return if Fighter B Wins: include hedge-side and independent winners
+    # Return and profit if Fighter B wins
     fighter_b_returns = sum(
-        (bet["stake"] * bet["odds"] - (0 if bet["bonus_cash"] else bet["stake"]))
+        adjusted_return(bet)
         for bet in bets
-        if bet["result"] in ["Yes", "TBD"] and (
-            bet["hedge_side_exposure"] or not bet["subject_to_hedge"]
-        )
+        if bet["hedge_side_exposure"] or not bet["subject_to_hedge"]
     )
+    fighter_b_profits = fighter_b_returns
 
     hedge_return = hedge_stake * hedge_odds
-    profit_if_a = fighter_a_returns - hedge_stake
-    profit_if_b = hedge_return + fighter_b_returns - hedge_stake
+    profit_if_a = fighter_a_profits - hedge_stake
+    profit_if_b = hedge_return + fighter_b_profits - hedge_stake
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
