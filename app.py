@@ -59,11 +59,13 @@ for hedge_stake in range(0, max_hedge + 1, hedge_unit):
         if bet["result"] in ["Yes", "TBD"] and not bet["hedge_side_exposure"]
     )
 
-    # Return if Fighter B Wins: include all bets marked Yes or TBD that ARE hedge side exposure
+    # Return if Fighter B Wins: include hedge side exposure + independent winners
     fighter_b_returns = sum(
         bet["stake"] * bet["odds"]
         for bet in bets
-        if bet["result"] in ["Yes", "TBD"] and bet["hedge_side_exposure"]
+        if bet["result"] in ["Yes", "TBD"] and (
+            bet["hedge_side_exposure"] or not bet["subject_to_hedge"]
+        )
     )
 
     hedge_return = hedge_stake * hedge_odds
