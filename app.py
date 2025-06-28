@@ -117,6 +117,12 @@ else:
     total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"])
     fighter_a_returns = sum(adjusted_return(bet) for bet in bets if bet["result"] in ["Yes", "TBD"])
     profit_if_a = fighter_a_returns - total_staked
+
+    real_return_a = sum(adjusted_return(bet) for bet in bets if bet["result"] in ["Yes", "TBD"] and not bet["bonus_cash"])
+    bonus_return_a = fighter_a_returns - real_return_a
+    real_return_b = real_return_a
+    bonus_return_b = bonus_return_a
+
     rows.append({
         "Hedge Stake": "$0.00",
         "Total Wagered": f"${total_staked:.2f}",
