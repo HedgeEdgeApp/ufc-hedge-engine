@@ -61,6 +61,8 @@ def adjusted_return(bet):
 
 # Hedge matrix generation
 rows = []
+real_return_a = bonus_return_a = 0
+real_return_b = bonus_return_b = 0
 
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
@@ -82,6 +84,21 @@ for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     hedge_return = hedge_stake * hedge_odds
     profit_if_a = fighter_a_returns - total_staked
     profit_if_b = hedge_return + fighter_b_returns - total_staked
+
+    # Real vs. Bonus breakdown
+    real_return_a = sum(
+        adjusted_return(bet)
+        for bet in bets
+        if not bet["bonus_cash"] and not bet["hedge_side_exposure"] and bet["result"] in ["Yes", "TBD"]
+    )
+    bonus_return_a = fighter_a_returns - real_return_a
+
+    real_return_b = sum(
+        adjusted_return(bet)
+        for bet in bets
+        if not bet["bonus_cash"] and (bet["hedge_side_exposure"] or not bet["subject_to_hedge"]) and bet["result"] in ["Yes", "TBD"]
+    )
+    bonus_return_b = fighter_b_returns - real_return_b
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
@@ -110,3 +127,12 @@ if fighter_a and fighter_b:
 
 # Show hedge matrix
 st.dataframe(df, hide_index=True, use_container_width=True)
+
+# Bonus Breakdown Section
+st.markdown("### \U0001F4CA Bonus vs Real Return Breakdown")
+summary_df = pd.DataFrame({
+    "Component": ["Real Return", "Bonus Return"],
+    f"If {fighter_a} Wins": [f"${real_return_a:.2f}", f"${bonus_return_a:.2f}"],
+    f"If {fighter_b} Wins": [f"${real_return_b:.2f}", f"${bonus_return_b:.2f}"]
+})
+st.dataframe(summary_df, hide_index=True, use_container_width=True)
