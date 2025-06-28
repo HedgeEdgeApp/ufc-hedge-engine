@@ -16,7 +16,7 @@ num_bets = st.number_input("How many bets do you want to enter?", min_value=1, s
 
 # Collect each bet's data (stacked layout)
 for i in range(num_bets):
-    st.markdown(f"### 🧾 Bet #{i+1}")
+    st.markdown(f"### \U0001F9FE Bet #{i+1}")
     name = st.text_input(f"Bet #{i+1} Name", key=f"name_{i}")
     odds = st.number_input("Odds", min_value=1.0, step=0.01, key=f"odds_{i}")
     stake = st.number_input("Stake ($)", min_value=0.0, step=1.0, key=f"stake_{i}")
@@ -34,8 +34,12 @@ for i in range(num_bets):
     })
 
 # Final Event Details
-st.markdown("### 💣 Final Event Details")
-hedge_fighter = st.text_input("Who are you hedging on in the final event? (e.g. Smith)")
+st.markdown("### \U0001F4A3 Final Event Details")
+col1, col2 = st.columns(2)
+fighter_a = col1.text_input("Fighter A (Original Side)", key="fighter_a")
+fighter_b = col2.text_input("Fighter B (Hedge Side)", key="fighter_b")
+
+hedge_fighter = fighter_b
 hedge_odds = st.number_input("Odds for the hedge event", min_value=1.0, step=0.01)
 
 # Hedge Stake Unit Selector
@@ -48,31 +52,31 @@ rows = []
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
 
-    # Return if Original Wins: include all bets marked Yes or TBD that are NOT hedge side exposure
-    original_returns = sum(
+    # Return if Fighter A Wins: include all bets marked Yes or TBD that are NOT hedge side exposure
+    fighter_a_returns = sum(
         bet["stake"] * bet["odds"]
         for bet in bets
         if bet["result"] in ["Yes", "TBD"] and not bet["hedge_side_exposure"]
     )
 
-    # Return if Hedge Wins: include all bets marked Yes or TBD that ARE hedge side exposure
-    hedge_returns = sum(
+    # Return if Fighter B Wins: include all bets marked Yes or TBD that ARE hedge side exposure
+    fighter_b_returns = sum(
         bet["stake"] * bet["odds"]
         for bet in bets
         if bet["result"] in ["Yes", "TBD"] and bet["hedge_side_exposure"]
     )
 
     hedge_return = hedge_stake * hedge_odds
-    profit_if_original = original_returns - total_staked
-    profit_if_hedge = hedge_return + hedge_returns - total_staked
+    profit_if_a = fighter_a_returns - total_staked
+    profit_if_b = hedge_return + fighter_b_returns - total_staked
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
         "Total Wagered": f"${total_staked:.2f}",
-        "Return if Original Wins": f"${original_returns:.2f}",
-        "Profit if Original Wins": f"${profit_if_original:.2f}",
-        f"Return if {hedge_fighter} (Hedge) Wins": f"${hedge_return + hedge_returns:.2f}",
-        f"Profit if {hedge_fighter} (Hedge) Wins": f"${profit_if_hedge:.2f}",
+        f"Return if {fighter_a} (Original) Wins": f"${fighter_a_returns:.2f}",
+        f"Profit if {fighter_a} (Original) Wins": f"${profit_if_a:.2f}",
+        f"Return if {fighter_b} (Hedge) Wins": f"${hedge_return + fighter_b_returns:.2f}",
+        f"Profit if {fighter_b} (Hedge) Wins": f"${profit_if_b:.2f}"
     })
 
 df = pd.DataFrame(rows)
@@ -83,8 +87,12 @@ for bet in bets:
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
     scenario_parts.append(f"{bet['name']} {emoji}")
 
-st.markdown("### 💥 Scenario Summary")
+st.markdown("### \U0001F4A5 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
 # Show hedge matrix
 st.dataframe(df, hide_index=True, use_container_width=True)
+
+# Clarifying message for user context
+if fighter_a and fighter_b:
+    st.info(f"\U0001F4AC You are currently hedging on **{fighter_b}**. All other returns are attributed to **{fighter_a} (Original Side)**.")
