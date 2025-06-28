@@ -92,9 +92,9 @@ for bet in bets:
 st.markdown("### \U0001F4A5 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
 
+# Clarifying message for user context (moved just below scenario summary)
+if fighter_a and fighter_b:
+    st.info(f"\U0001F4AC You are currently hedging on **{fighter_b}**. All other returns are attributed to **{fighter_a} (Original Side)**.\n\n\U0001F6A8 **Important:** If you change the hedge fighter in the 'Final Event Details', make sure to revisit and update the checkboxes in each bet. Accurate results depend on the correct use of 'subject to hedge' and 'hedge side exposure'.")
+
 # Show hedge matrix
 st.dataframe(df, hide_index=True, use_container_width=True)
-
-# Clarifying message for user context
-if fighter_a and fighter_b:
-    st.info(f"\U0001F4AC You are currently hedging on **{fighter_b}**. All other returns are attributed to **{fighter_a} (Original Side)**.")
