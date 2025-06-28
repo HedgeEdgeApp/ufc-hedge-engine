@@ -23,7 +23,9 @@ for i in range(num_bets):
     result = st.selectbox("Did it win?", ["TBD", "Yes", "No"], key=f"result_{i}")
     subject_to_hedge = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_dependent_{i}")
     hedge_side_exposure = st.checkbox("This bet includes the hedge fighter (hedge side exposure)", key=f"hedge_side_{i}")
-    bonus_cash = st.checkbox("Was this bet placed using bonus cash?", key=f"bonus_cash_{i}")
+    bonus_cash = st.checkbox("Was this bet placed using bonus cash? \U0001F6C8", key=f"bonus_cash_{i}")
+    if bonus_cash:
+        st.caption("\- Bonus bets will not count toward 'Total Wagered' and returns/profits will only include winnings (no stake)")
 
     bets.append({
         "name": name,
@@ -61,8 +63,8 @@ def adjusted_return(bet):
 
 # Hedge matrix generation
 rows = []
-real_return_a = bonus_return_a = 0
-real_return_b = bonus_return_b = 0
+real_return_a = bonus_return_a = real_profit_a = bonus_profit_a = 0
+real_return_b = bonus_return_b = real_profit_b = bonus_profit_b = 0
 
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
