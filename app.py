@@ -23,6 +23,7 @@ for i in range(num_bets):
     result = st.selectbox("Did it win?", ["TBD", "Yes", "No"], key=f"result_{i}")
     subject_to_hedge = st.checkbox("This bet depends on the final outcome (subject to hedge)", key=f"hedge_dependent_{i}")
     hedge_side_exposure = st.checkbox("This bet includes the hedge fighter (hedge side exposure)", key=f"hedge_side_{i}")
+    bonus_cash = st.checkbox("Was this bet placed using bonus cash?", key=f"bonus_cash_{i}")
 
     bets.append({
         "name": name,
@@ -30,7 +31,8 @@ for i in range(num_bets):
         "stake": stake,
         "result": result,
         "subject_to_hedge": subject_to_hedge,
-        "hedge_side_exposure": hedge_side_exposure
+        "hedge_side_exposure": hedge_side_exposure,
+        "bonus_cash": bonus_cash
     })
 
 # Final Event Details
@@ -53,16 +55,16 @@ st.warning("\U0001F6A8 If you change the hedge fighter in the 'Final Event Detai
 rows = []
 
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
-    total_staked = sum(bet["stake"] for bet in bets) + hedge_stake
+    total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
 
-    # Return if Fighter A Wins: include all bets marked Yes or TBD that are NOT hedge side exposure
+    # Return if Fighter A Wins: include all relevant bets
     fighter_a_returns = sum(
         bet["stake"] * bet["odds"]
         for bet in bets
         if bet["result"] in ["Yes", "TBD"] and not bet["hedge_side_exposure"]
     )
 
-    # Return if Fighter B Wins: include hedge side exposure + independent winners
+    # Return if Fighter B Wins: include hedge-side and independent winners
     fighter_b_returns = sum(
         bet["stake"] * bet["odds"]
         for bet in bets
@@ -90,7 +92,8 @@ df = pd.DataFrame(rows)
 scenario_parts = []
 for bet in bets:
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
-    scenario_parts.append(f"{bet['name']} {emoji}")
+    bc_flag = " (Bonus)" if bet["bonus_cash"] else ""
+    scenario_parts.append(f"{bet['name']}{bc_flag} {emoji}")
 
 st.markdown("### \U0001F4A5 Scenario Summary")
 st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
