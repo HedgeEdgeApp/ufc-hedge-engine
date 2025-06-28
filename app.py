@@ -65,25 +65,23 @@ rows = []
 for hedge_stake in range(0, max_hedge + 1, hedge_unit):
     total_staked = sum(bet["stake"] for bet in bets if not bet["bonus_cash"]) + hedge_stake
 
-    # Return and profit if Fighter A wins
+    # Return if Fighter A wins
     fighter_a_returns = sum(
         adjusted_return(bet)
         for bet in bets
         if not bet["hedge_side_exposure"]
     )
-    fighter_a_profits = fighter_a_returns
 
-    # Return and profit if Fighter B wins
+    # Return if Fighter B wins
     fighter_b_returns = sum(
         adjusted_return(bet)
         for bet in bets
         if bet["hedge_side_exposure"] or not bet["subject_to_hedge"]
     )
-    fighter_b_profits = fighter_b_returns
 
     hedge_return = hedge_stake * hedge_odds
-    profit_if_a = fighter_a_profits - hedge_stake
-    profit_if_b = hedge_return + fighter_b_profits - hedge_stake
+    profit_if_a = fighter_a_returns - total_staked
+    profit_if_b = hedge_return + fighter_b_returns - total_staked
 
     rows.append({
         "Hedge Stake": f"${hedge_stake:.2f}",
