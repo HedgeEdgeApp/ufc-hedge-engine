@@ -136,13 +136,16 @@ df = pd.DataFrame(rows)
 
 # Scenario Summary
 scenario_parts = []
-for bet in bets:
+for i, bet in enumerate(bets):
     emoji = "❓" if bet["result"] == "TBD" else "✅" if bet["result"] == "Yes" else "❌"
     bc_flag = " (Bonus)" if bet["bonus_cash"] else ""
-    scenario_parts.append(f"{bet['name']}{bc_flag} {emoji}")
+    label = bet["name"] or f"Bet#{i+1}"
+    scenario_parts.append(f"{label}{bc_flag} {emoji}")
+
+scenario_summary_str = "Scenario: " + " / ".join(scenario_parts)
 
 st.markdown("### 💥 Scenario Summary")
-st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
+st.markdown(f"**{scenario_summary_str}**")
 
 # Clarifying message for user context (placed just below scenario summary)
 if fighter_a and fighter_b:
@@ -150,6 +153,17 @@ if fighter_a and fighter_b:
 
 # Show hedge matrix
 st.dataframe(df, hide_index=True, use_container_width=True)
+
+# 🔽 Download CSV with Scenario Header
+csv_lines = [scenario_summary_str] + df.to_csv(index=False).splitlines()
+csv_csv_content = "\n".join(csv_lines)
+
+st.download_button(
+    label="📥 Download Hedge Table as CSV",
+    data=csv_csv_content,
+    file_name="hedge_matrix.csv",
+    mime="text/csv"
+)
 
 # Bonus Breakdown Section
 st.markdown("### 📊 Bonus vs Real Return Breakdown")
