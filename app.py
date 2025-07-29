@@ -136,21 +136,29 @@ else:
 df = pd.DataFrame(rows)
 
 # Scenario Summary
-scenario_parts = []
+scenario_display_parts = []
+csv_parts = []
+
 for bet in bets:
     if bet["result"] == "Yes":
-        emoji = "WIN"
+        emoji = "✅"
+        status = "WIN"
     elif bet["result"] == "No":
-        emoji = "LOSS"
+        emoji = "❌"
+        status = "LOSS"
     else:
-        emoji = "TBD"
-    bc_flag = " (Bonus)" if bet["bonus_cash"] else ""
-    scenario_parts.append(f"{bet['name']}{bc_flag} {emoji}")
+        emoji = "❓"
+        status = "TBD"
 
-scenario_text = f"Scenario: {' / '.join(scenario_parts)}"
+    bc_flag = " (Bonus)" if bet["bonus_cash"] else ""
+    scenario_display_parts.append(f"{bet['name']}{bc_flag} {emoji}")
+    csv_parts.append(f"{bet['name']}{bc_flag} {status}")
+
+scenario_display_text = f"Scenario: {' / '.join(scenario_display_parts)}"
+scenario_csv_text = f"Scenario: {' / '.join(csv_parts)}"
 
 st.markdown("### 💥 Scenario Summary")
-st.markdown(f"**{scenario_text}**")
+st.markdown(f"**{scenario_display_text}**")
 
 # Clarifying message for user context (placed just below scenario summary)
 if fighter_a and fighter_b:
@@ -161,7 +169,7 @@ st.dataframe(df, hide_index=True, use_container_width=True)
 
 # Download CSV button including scenario summary
 csv_buffer = io.StringIO()
-csv_buffer.write(scenario_text + "\n")
+csv_buffer.write(scenario_csv_text + "\n")
 df.to_csv(csv_buffer, index=False)
 csv_data = csv_buffer.getvalue().encode("utf-8")
 
