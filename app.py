@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import io
 
 st.set_page_config(page_title="Sports Betting Hedge Engine", layout="wide")
 
@@ -146,8 +147,10 @@ for bet in bets:
     bc_flag = " (Bonus)" if bet["bonus_cash"] else ""
     scenario_parts.append(f"{bet['name']}{bc_flag} {emoji}")
 
+scenario_text = f"Scenario: {' / '.join(scenario_parts)}"
+
 st.markdown("### 💥 Scenario Summary")
-st.markdown(f"**Scenario:** {' / '.join(scenario_parts)}")
+st.markdown(f"**{scenario_text}**")
 
 # Clarifying message for user context (placed just below scenario summary)
 if fighter_a and fighter_b:
@@ -155,6 +158,19 @@ if fighter_a and fighter_b:
 
 # Show hedge matrix
 st.dataframe(df, hide_index=True, use_container_width=True)
+
+# Download CSV button including scenario summary
+csv_buffer = io.StringIO()
+csv_buffer.write(scenario_text + "\n")
+df.to_csv(csv_buffer, index=False)
+csv_data = csv_buffer.getvalue().encode("utf-8")
+
+st.download_button(
+    label="⬇️ Export Hedge Table as CSV",
+    data=csv_data,
+    file_name="hedge_table.csv",
+    mime="text/csv"
+)
 
 # Bonus Breakdown Section
 st.markdown("### 📊 Bonus vs Real Return Breakdown")
