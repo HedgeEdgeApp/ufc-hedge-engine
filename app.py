@@ -7,6 +7,10 @@ st.set_page_config(page_title="Sports Betting Hedge Engine", layout="wide")
 # Display banner image (optional)
 st.image("hedge_edge_banner.png", use_container_width=True)
 
+# App subtitle
+st.markdown("### **HEDGE EDGE**")
+st.markdown("*A Sports Betting Hedge Engine for minimizing risk and maximizing profits*")
+
 st.markdown("---")
 
 # Store all bets
