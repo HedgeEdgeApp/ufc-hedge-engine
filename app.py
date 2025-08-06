@@ -13,6 +13,25 @@ st.markdown("*A Sports Betting Hedge Engine for minimizing risk and maximizing p
 
 st.markdown("---")
 
+# Introduction paragraph
+st.markdown("""
+### 🔍 About Hedge Edge
+
+**Welcome to Hedge Edge** — a precision-built sports betting hedge engine designed to help bettors minimize financial risk and maximize profitability. This tool empowers users to dynamically evaluate their existing bets, assess outcomes based on a final event, and explore profitable hedge options in real time.
+
+Whether you're hedging a UFC parlay before the main event or managing exposure across multiple multi-leg bets, **Hedge Edge** gives you the visibility and calculations you need to make smarter, more informed decisions.
+
+This app is ideal for:
+
+✅ **Parlay bettors** managing risk on final legs  
+✅ **Live bettors** seeking to lock in profit or reduce downside  
+✅ **Bonus bet users** tracking real vs. bonus stake outcomes  
+✅ **Disciplined gamblers** using calculated hedging for better bankroll management  
+✅ **Anyone** looking to extract more value and reduce volatility from their sports wagers
+""")
+
+st.markdown("---")
+
 # Store all bets
 bets = []
 
