@@ -27,7 +27,9 @@ This app is ideal for:
 ✅ **Live bettors** seeking to lock in profit or reduce downside  
 ✅ **Bonus bet users** tracking real vs. bonus stake outcomes  
 ✅ **Disciplined gamblers** using calculated hedging for better bankroll management  
-✅ **Anyone** looking to extract more value and reduce volatility from their sports wagers
+✅ **Anyone** looking to extract more value and reduce volatility from their sports wagers  
+
+**Enter your bets below, track the results, and let the Hedge Edge engine do the math.**
 """)
 
 st.markdown("---")
